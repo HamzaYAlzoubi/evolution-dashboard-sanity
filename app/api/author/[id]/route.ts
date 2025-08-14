@@ -2,15 +2,13 @@ import { writeClient } from "@/sanity/lib/write-client";
 import { NextResponse } from "next/server";
 
 // PATCH /api/author/:id
-export async function PATCH(
-  req: Request,
-  context: { params: { id: string } }
-) {
+export async function PATCH(req: Request) {
   const body = await req.json();
-  const { id } = context.params;
+  const url = new URL(req.url);
+  const id = url.pathname.split("/").pop();
 
   try {
-    const result = await writeClient.patch(id)
+    const result = await writeClient.patch(id!)
       .set({
         title: body.title,
         price: parseFloat(body.price),
@@ -25,14 +23,12 @@ export async function PATCH(
 }
 
 // DELETE /api/author/:id
-export async function DELETE(
-  req: Request,
-  context: { params: { id: string } }
-) {
-  const { id } = context.params;
+export async function DELETE(req: Request) {
+  const url = new URL(req.url);
+  const id = url.pathname.split("/").pop();
 
   try {
-    await writeClient.delete(id);
+    await writeClient.delete(id!);
     return NextResponse.json({ success: true, message: "Product deleted" });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
