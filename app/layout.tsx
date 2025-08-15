@@ -8,7 +8,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className=" bg-gray-50">
+      <body className=" ">
         <Sidebar />
         {children}
       </body>

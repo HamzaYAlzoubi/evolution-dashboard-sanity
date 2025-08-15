@@ -79,7 +79,7 @@ export default function Home() {
   };
 
   return (
-    <div className=" relative flex justify-center items-center min-h-screen bg-gray-50 md:mr-64 duration-300">
+    <div className=" relative flex justify-center items-center min-h-screen  md:mr-64 duration-300">
       {Alertsuccess && (
         <Alert className="absolute top-20 w-[90%] text-green-600">
           <CheckCircle2Icon />
@@ -95,7 +95,7 @@ export default function Home() {
         </Alert>
       )}
 
-      <Card className="">
+      <Card className="shadow-none border-none">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* المشروع - الآن سيلكت من شادسن */}

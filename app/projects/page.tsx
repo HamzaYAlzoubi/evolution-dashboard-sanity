@@ -434,7 +434,7 @@ export default function ProjectsPage() {
             const totalTime = calcTotalTime(project.subProjects);
             return (
               <SortableRow key={project.id} id={project.id}>
-                <Card className="p-4 relative">
+                <Card className=" relative ">
                   <div
                     className="flex items-center justify-between cursor-pointer "
                     onClick={() => toggleExpand(project.id)}
