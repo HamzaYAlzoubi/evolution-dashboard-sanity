@@ -39,7 +39,7 @@ export default function Sidebar() {
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl"  href="/projects">المشاريع</Link>
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl"  href="/sessionsManager">مدير الجلسات</Link>
         </nav>
-        <div className="absolute bottom-10 left-0 w-full flex justify-center">
+        <div className="absolute bottom-20 left-0 w-full flex justify-center">
           <button
             className="p-2 px-4 rounded-md shadow border border-gray-300 bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200"
             onClick={() => setDark((prev) => !prev)}

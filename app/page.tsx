@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,8 @@ import {
 
 import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ChevronDown, ChevronUp, Star } from "lucide-react";
+
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -79,7 +81,8 @@ export default function Home() {
   };
 
   return (
-    <div className=" relative flex justify-center items-center min-h-screen  md:mr-64 duration-300">
+    <div className=" relative flex justify-center items-center min-h-screen  md:mr-64 duration-300 bg-white dark:bg-[#23232A]">
+            <h1 className="absolute top-6 left-6">Power by Novo.inc</h1>
       {Alertsuccess && (
         <Alert className="absolute top-20 w-[90%] text-green-600">
           <CheckCircle2Icon />
@@ -179,6 +182,18 @@ export default function Home() {
               إضافة الجلسة
             </Button>
           </form>
+        </CardContent>
+      </Card>
+      <Card className="absolute bottom-0 w-full shadow-none border-none m-6">
+        <CardTitle className="text-center text-lg font-semibold">الهدف اليومي</CardTitle>
+        <CardContent className="flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <Star className="text-yellow-500" />
+            <span className="text-lg font-semibold">4 نجوم</span>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            أكمل 4 ساعات من العمل اليوم لتحقيق الهدف.
+          </p>
         </CardContent>
       </Card>
     </div>

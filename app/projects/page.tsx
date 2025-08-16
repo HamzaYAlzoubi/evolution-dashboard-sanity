@@ -398,7 +398,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="p-6 space-y-4 md:mr-64 duration-300 bg-red-0  ">
-      <div className="flex justify-between items-center gap-4"></div>
+      <div className="flex justify-between items-center gap-4 "></div>
 
       <div className="flex justify-between items-center">
         {/* زر إضافة مشروع */}
@@ -433,9 +433,9 @@ export default function ProjectsPage() {
             const totalTime = calcTotalTime(project.subProjects);
             return (
               <SortableRow key={project.id} id={project.id}>
-                <Card className="p-4">
+                <Card className="p-4 ">
                   <div
-                    className="flex items-center justify-between cursor-pointer "
+                    className="flex items-center justify-between cursor-pointer"
                     onClick={() => toggleExpand(project.id)}
                   >
                     <div className="flex items-center gap-2 mr-[-10px]">
@@ -526,7 +526,7 @@ export default function ProjectsPage() {
                         {project.subProjects.map((subProject) => (
                           <SortableRow key={subProject.id} id={subProject.id}>
                             <Card
-                              className="p-4 pt-2 pb-2"
+                              className="p-4 pt-2 pb-2 dark:border-gray-700 cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center justify-between gap-2 pr-2">
