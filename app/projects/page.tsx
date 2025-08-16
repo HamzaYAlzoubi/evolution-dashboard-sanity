@@ -239,8 +239,8 @@ export default function ProjectsPage() {
     if (weeks > 0) parts.push(`${weeks}w`);
     if (days > 0) parts.push(`${days}d`);
     if (hrs > 0) parts.push(`${hrs}h`);
-    if (mins > 0) parts.push(`${mins}min`);
-    if (parts.length === 0) return "0min";
+    if (mins > 0) parts.push(`${mins}m`);
+    if (parts.length === 0) return "0m";
 
     return parts.join(", ");
   }
@@ -281,7 +281,6 @@ export default function ProjectsPage() {
       return newProjects;
     });
   };
-
 
   // fkkfmle
   // فتح حوار تعديل
@@ -434,29 +433,32 @@ export default function ProjectsPage() {
             const totalTime = calcTotalTime(project.subProjects);
             return (
               <SortableRow key={project.id} id={project.id}>
-                <Card className=" relative ">
+                <Card className="p-4 relative">
                   <div
                     className="flex items-center justify-between cursor-pointer "
                     onClick={() => toggleExpand(project.id)}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mr-[-10px]">
                       {expanded.includes(project.id) ? (
                         <ChevronDown />
                       ) : (
                         <ChevronRight />
                       )}
-                      <span className="font-semibold">{project.name}</span>
+                      <span className="font-semibold ">
+                        {project.name}
+                      </span>
+                    </div>
                       <Badge
+                      className="ml-2"
                         variant={
                           project.status === "نشط" ? "default" : "secondary"
                         }
                       >
                         {project.status}
                       </Badge>
-                    </div>
 
-                    <div className="absolute left-0 pl-2">
-                      <span className="text-lg text-gray-500">
+                    <div className="flex items-center bg-green-5 ml-[-15px]">
+                      <span className="text-lg text-gray-500 whitespace-nowrap">
                         {showDetailedTime
                           ? formatTimeDetailed(
                               totalTime.hours,
