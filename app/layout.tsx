@@ -7,7 +7,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" className="dark">
-      <body className="bg-gray-50">
+      <body className="bg-gray-50 dark:bg-gray-900 dark:text-gray-100">
         {children}
       </body>
     </html>

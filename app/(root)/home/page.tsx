@@ -13,10 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Star } from "lucide-react";
 
 
 export default function Home() {
@@ -81,121 +78,106 @@ export default function Home() {
   };
 
   return (
-    <div className=" relative flex justify-center items-center min-h-screen  md:mr-64 duration-300 bg-white dark:bg-[#23232A]">
-            <h1 className="absolute top-6 left-6">Power by Novo.inc</h1>
-      {Alertsuccess && (
-        <Alert className="absolute top-20 w-[90%] text-green-600">
-          <CheckCircle2Icon />
-          <AlertTitle>نجح! وفقك الله تعالى لكل خير</AlertTitle>
-          <AlertDescription className="dark:text-white">تم حفظ الجلسة بنجاح.</AlertDescription>
-        </Alert>
-      )}
-      {AlertError && (
-        <Alert className="absolute top-20 w-[90%]" variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>فشل! لم يتم تسجيل الجلسة.</AlertTitle>
-          <AlertDescription className="dark:text-white">انت لم تضع ساعات ودقائق للجلسة.</AlertDescription>
-        </Alert>
-      )}
+    <div className=" flex flex-col items-center justify-center min-h-screen bg-white  dark:bg-[#0F172B]">
+        <Card className="shadow-none border-none dark:bg-[#0F172B]">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4 ">
+              {/* المشروع - الآن سيلكت من شادسن */}
+              <div className="space-y-2">
+                <Label htmlFor="project">المشروع</Label>
 
-      <Card className="shadow-none border-none">
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4 ">
-            {/* المشروع - الآن سيلكت من شادسن */}
-            <div className="space-y-2">
-              <Label htmlFor="project">المشروع</Label>
+                <Select
+                  value={formData.project}
+                  onValueChange={handleProjectChange}
+                >
+                  <SelectTrigger  id="project" className="w-full dark:border-white">
+                    <SelectValue placeholder="اختر المشروع" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((p) => (
+                      <SelectItem  key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select
-                value={formData.project}
-                onValueChange={handleProjectChange}
-              >
-                <SelectTrigger  id="project" className="w-full dark:border-white">
-                  <SelectValue placeholder="اختر المشروع" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((p) => (
-                    <SelectItem  key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* مدة الجلسة */}
+              <div className="space-y-2">
+                <Label>مدة الجلسة</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    name="hours"
+                    placeholder="ساعة"
+                    className="w-1/2 dark:border-white"
+                    min="0"
+                    value={formData.hours}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    type="number"
+                    name="minutes"
+                    placeholder="دقيقة"
+                    className="w-1/2 dark:border-white"
+                    min="0"
+                    value={formData.minutes}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
 
-            {/* مدة الجلسة */}
-            <div className="space-y-2">
-              <Label>مدة الجلسة</Label>
-              <div className="flex gap-2">
+              {/* حقل تاريخ الجلسة */}
+              <div className="space-y-2">
+                <Label htmlFor="date">تاريخ الجلسة</Label>
                 <Input
-                  type="number"
-                  name="hours"
-                  placeholder="ساعة"
-                  className="w-1/2 dark:border-white"
-                  min="0"
-                  value={formData.hours}
-                  onChange={handleChange}
-                />
-                <Input
-                  type="number"
-                  name="minutes"
-                  placeholder="دقيقة"
-                  className="w-1/2 dark:border-white"
-                  min="0"
-                  value={formData.minutes}
-                  onChange={handleChange}
+                  type="date"
+                  id="date"
+                  name="date"
+                  className="w-full dark:border-white"
+                  value={formData.date}
+                  onChange={(e) => handleDateChange(e.target.value)}
                 />
               </div>
-            </div>
 
-            {/* حقل تاريخ الجلسة */}
-            <div className="space-y-2">
-              <Label htmlFor="date">تاريخ الجلسة</Label>
-              <Input
-                type="date"
-                id="date"
-                name="date"
-                className="w-full dark:border-white"
-                value={formData.date}
-                onChange={(e) => handleDateChange(e.target.value)}
-              />
-            </div>
+              {/* ملاحظات */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">ملاحظات</Label>
+                <Textarea
+                  id="notes"
+                  name="notes"
+                  placeholder="(إختياري)"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  className="dark:border-white"
+                />
+              </div>
 
-            {/* ملاحظات */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">ملاحظات</Label>
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="(إختياري)"
-                value={formData.notes}
-                onChange={handleChange}
-                className="dark:border-white"
-              />
+              {/* زر الإضافة */}
+              <Button
+                type="submit"
+                variant="outline"
+                className="w-full dark:bg-[#6866F1] bg-[#0f172b] text-white"
+              >
+                إضافة الجلسة
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-none border-none dark:bg-[#0F172B]">
+          <CardTitle className="text-center text-lg font-semibold">الهدف اليومي</CardTitle>
+          <CardContent className="flex flex-col items-center">
+            <div className="flex items-center gap-2">
+              <Star className="text-yellow-500" />
+              <span className="text-lg font-semibold">4 نجوم</span>
             </div>
-
-            {/* زر الإضافة */}
-            <Button
-              type="submit"
-              variant="outline"
-              className="w-full dark:bg-[#6866F1] bg-[#0f172b] text-white"
-            >
-              إضافة الجلسة
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-      <Card className="absolute bottom-0 w-full shadow-none border-none m-6">
-        <CardTitle className="text-center text-lg font-semibold">الهدف اليومي</CardTitle>
-        <CardContent className="flex flex-col items-center">
-          <div className="flex items-center gap-2">
-            <Star className="text-yellow-500" />
-            <span className="text-lg font-semibold">4 نجوم</span>
-          </div>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">
-            أكمل 4 ساعات من العمل اليوم لتحقيق الهدف.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">
+              أكمل 4 ساعات من العمل اليوم لتحقيق الهدف.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
   );
 }
