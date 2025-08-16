@@ -67,13 +67,13 @@ function SortableRow({
 type Project = {
   id: string;
   name: string;
-  status: "نشط" | "مكتمل";
+  status: "نشط" | "مكتمل" | "مؤجل";
   subProjects: SubProject[];
 };
 type SubProject = {
   id: string;
   name: string;
-  status: "نشط" | "مكتمل";
+  status: "نشط" | "مكتمل" | "مؤجل";
   hours: number;
   minutes: number;
 };
@@ -160,7 +160,7 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [newSubProjectName, setNewSubProjectName] = useState("");
   const [editName, setEditName] = useState("");
-  const [editStatus, setEditStatus] = useState<"نشط" | "مكتمل">("نشط");
+  const [editStatus, setEditStatus] = useState<"نشط" | "مكتمل" | "مؤجل">("نشط");
 
   // حالة تبديل التنسيق
   const [showDetailedTime, setShowDetailedTime] = useState(false);
@@ -397,7 +397,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="p-6 space-y-4 md:mr-64 duration-300">
+    <div className="p-6 space-y-4 md:mr-64 duration-300 bg-red-0  ">
       <div className="flex justify-between items-center gap-4"></div>
 
       <div className="flex justify-between items-center">
@@ -433,7 +433,7 @@ export default function ProjectsPage() {
             const totalTime = calcTotalTime(project.subProjects);
             return (
               <SortableRow key={project.id} id={project.id}>
-                <Card className="p-4 relative">
+                <Card className="p-4">
                   <div
                     className="flex items-center justify-between cursor-pointer "
                     onClick={() => toggleExpand(project.id)}
@@ -448,10 +448,15 @@ export default function ProjectsPage() {
                         {project.name}
                       </span>
                     </div>
+
                       <Badge
                       className="ml-2"
                         variant={
-                          project.status === "نشط" ? "default" : "secondary"
+                          project.status === "نشط"
+                            ? "default"
+                            : project.status === "مكتمل"
+                            ? "secondary"
+                            : "destructive"
                         }
                       >
                         {project.status}
@@ -521,25 +526,28 @@ export default function ProjectsPage() {
                         {project.subProjects.map((subProject) => (
                           <SortableRow key={subProject.id} id={subProject.id}>
                             <Card
-                              className="p-2"
+                              className="p-4 pt-2 pb-2"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center justify-between gap-2 pr-2">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 mr-[-10px]">
                                   <span>{subProject.name}</span>
+                                </div>
                                   <Badge
+                                  className="ml-2"
                                     variant={
                                       subProject.status === "نشط"
                                         ? "default"
-                                        : "secondary"
+                                        : subProject.status === "مكتمل"
+                                        ? "secondary"
+                                        : "outline"
                                     }
                                   >
                                     {subProject.status}
                                   </Badge>
-                                </div>
 
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[17px] text-gray-500">
+                                <div className="flex items-center bg-green-5 ml-[-15px]">
+                                  <span className="text-lg text-gray-500 whitespace-nowrap">
                                     {showDetailedTime
                                       ? formatTimeDetailed(
                                           subProject.hours,
@@ -690,11 +698,12 @@ export default function ProjectsPage() {
             />
             <select
               value={editStatus}
-              onChange={(e) => setEditStatus(e.target.value as "نشط" | "مكتمل")}
+              onChange={(e) => setEditStatus(e.target.value as "نشط" | "مكتمل" | "مؤجل")}
               className="w-full rounded border border-gray-300 px-3 py-2"
             >
               <option value="نشط">نشط</option>
               <option value="مكتمل">مكتمل</option>
+              <option value="مؤجل">مؤجل</option>
             </select>
           </div>
           <DialogFooter>
