@@ -463,7 +463,7 @@ export default function ProjectsPage() {
                       </Badge>
 
                     <div className="flex items-center bg-green-5 ml-[-15px]">
-                      <span className="text-lg text-gray-500 whitespace-nowrap">
+                      <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
                         {showDetailedTime
                           ? formatTimeDetailed(
                               totalTime.hours,
@@ -547,7 +547,7 @@ export default function ProjectsPage() {
                                   </Badge>
 
                                 <div className="flex items-center bg-green-5 ml-[-15px]">
-                                  <span className="text-lg text-gray-500 whitespace-nowrap">
+                                  <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
                                     {showDetailedTime
                                       ? formatTimeDetailed(
                                           subProject.hours,

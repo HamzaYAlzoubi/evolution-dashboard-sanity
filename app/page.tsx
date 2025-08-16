@@ -84,20 +84,20 @@ export default function Home() {
         <Alert className="absolute top-20 w-[90%] text-green-600">
           <CheckCircle2Icon />
           <AlertTitle>نجح! وفقك الله تعالى لكل خير</AlertTitle>
-          <AlertDescription>تم حفظ الجلسة بنجاح.</AlertDescription>
+          <AlertDescription className="dark:text-white">تم حفظ الجلسة بنجاح.</AlertDescription>
         </Alert>
       )}
       {AlertError && (
         <Alert className="absolute top-20 w-[90%]" variant="destructive">
           <AlertCircleIcon />
           <AlertTitle>فشل! لم يتم تسجيل الجلسة.</AlertTitle>
-          <AlertDescription>انت لم تضع ساعات ودقائق للجلسة.</AlertDescription>
+          <AlertDescription className="dark:text-white">انت لم تضع ساعات ودقائق للجلسة.</AlertDescription>
         </Alert>
       )}
 
       <Card className="shadow-none border-none">
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 ">
             {/* المشروع - الآن سيلكت من شادسن */}
             <div className="space-y-2">
               <Label htmlFor="project">المشروع</Label>
@@ -106,12 +106,12 @@ export default function Home() {
                 value={formData.project}
                 onValueChange={handleProjectChange}
               >
-                <SelectTrigger id="project" className="w-full">
+                <SelectTrigger  id="project" className="w-full dark:border-white">
                   <SelectValue placeholder="اختر المشروع" />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+                    <SelectItem  key={p.id} value={p.id}>
                       {p.name}
                     </SelectItem>
                   ))}
@@ -127,7 +127,7 @@ export default function Home() {
                   type="number"
                   name="hours"
                   placeholder="ساعة"
-                  className="w-1/2"
+                  className="w-1/2 dark:border-white"
                   min="0"
                   value={formData.hours}
                   onChange={handleChange}
@@ -136,7 +136,7 @@ export default function Home() {
                   type="number"
                   name="minutes"
                   placeholder="دقيقة"
-                  className="w-1/2"
+                  className="w-1/2 dark:border-white"
                   min="0"
                   value={formData.minutes}
                   onChange={handleChange}
@@ -151,7 +151,7 @@ export default function Home() {
                 type="date"
                 id="date"
                 name="date"
-                className="w-full"
+                className="w-full dark:border-white"
                 value={formData.date}
                 onChange={(e) => handleDateChange(e.target.value)}
               />
@@ -166,6 +166,7 @@ export default function Home() {
                 placeholder="(إختياري)"
                 value={formData.notes}
                 onChange={handleChange}
+                className="dark:border-white"
               />
             </div>
 
@@ -173,7 +174,7 @@ export default function Home() {
             <Button
               type="submit"
               variant="outline"
-              className="w-full bg-[#0f172b] text-white"
+              className="w-full dark:bg-[#6866F1] bg-[#0f172b] text-white"
             >
               إضافة الجلسة
             </Button>
