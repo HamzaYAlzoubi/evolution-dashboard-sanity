@@ -187,7 +187,7 @@ export default function SessionsByDay() {
   }
 
   return (
-    <div className="p-6 md:mr-64 duration-300 space-y-6">
+    <div className="p-6 space-y-6">
       {/* الإنجاز الكلي */}
       <Card className="shadow-lg rounded-2xl p-8 flex  flex-col items-center justify-between  ">
         <div className="flex flex-col items-center gap-2">
