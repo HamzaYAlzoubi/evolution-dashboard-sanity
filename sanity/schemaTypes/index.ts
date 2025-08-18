@@ -3,4 +3,5 @@ import project from './Project'
 import subProject from './SubProject'
 import session from './Session'
 
-export default [user, project, subProject, session]
+export const schema = [user, project, subProject, session];
+export default schema;
