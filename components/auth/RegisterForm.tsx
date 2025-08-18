@@ -48,6 +48,7 @@ export default function Register() {
         dailyTarget: 4,
       }),
     });
+
     if (res.ok) {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
