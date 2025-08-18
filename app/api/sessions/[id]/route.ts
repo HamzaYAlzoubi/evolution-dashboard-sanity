@@ -8,6 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const result = await writeClient.patch(id)
       .set({
         date: body.date,
+
         hours: body.hours,
         minutes: body.minutes,
         notes: body.notes,
@@ -20,10 +21,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function DELETE(req: Request) {
+  const url = new URL(req.url);
+  const id = url.pathname.split("/").pop();
   try {
-    await writeClient.delete(id);
+    await writeClient.delete(id!);
     return NextResponse.json({ success: true, message: "Session deleted" });
   } catch (err) {
     return NextResponse.json({ success: false, error: "Failed to delete session" }, { status: 500 });

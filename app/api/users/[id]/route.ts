@@ -19,10 +19,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function DELETE(req: Request) {
+      const url = new URL(req.url);
+  const id = url.pathname.split("/").pop();
   try {
-    await writeClient.delete(id);
+    await writeClient.delete(id!);
     return NextResponse.json({ success: true, message: "User deleted" });
   } catch (err) {
     return NextResponse.json({ success: false, error: "Failed to delete user" }, { status: 500 });
