@@ -2,6 +2,7 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions } from "next-auth";
 import { sanityClient } from "@/sanity/lib/client";
+import { compare } from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,12 +13,23 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        // تحقق من المستخدم في Sanity
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
         const query = `*[_type == 'user' && email == $email][0]`;
-        const user = await sanityClient.fetch(query, { email: credentials?.email });
-        if (!user) return null;
-        // تحقق من كلمة المرور (يجب تشفيرها فعليًا)
-        if (user.password !== credentials?.password) return null;
+        const user = await sanityClient.fetch(query, { email: credentials.email });
+
+        if (!user) {
+          return null;
+        }
+
+        const passwordsMatch = await compare(credentials.password, user.password);
+
+        if (!passwordsMatch) {
+          return null;
+        }
+
         return {
           id: user._id,
           email: user.email,
