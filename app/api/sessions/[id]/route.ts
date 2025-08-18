@@ -1,12 +1,14 @@
 import { writeClient } from "@/sanity/lib/write-client";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// النوع الصحيح للـ context
+interface Context {
+  params: { id: string }
+}
+
+export async function PATCH(req: NextRequest, context: Context) {
   const body = await req.json();
-  const { id } = params;
+  const { id } = context.params;
 
   try {
     const result = await writeClient
@@ -29,11 +31,8 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
+export async function DELETE(req: NextRequest, context: Context) {
+  const { id } = context.params;
 
   try {
     await writeClient.delete(id);
