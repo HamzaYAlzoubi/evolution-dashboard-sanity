@@ -397,7 +397,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="p-6 space-y-4 bg-red-0  ">
+    <div className="p-6 space-y-4 bg-red-0">
       <div className="flex justify-between items-center gap-4 "></div>
 
       <div className="flex justify-between items-center">

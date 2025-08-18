@@ -93,8 +93,7 @@ export default function SessionsByDay() {
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [detailsSession, setDetailsSession] = useState<Session | null>(null);
-
-  const dailyTargetMinutes = 4 * 60; // هدف افتراضي 4 ساعات
+  const [dailyTarget, setDailyTarget] = useState(4); // القيمة الافتراضية
 
   const sessionsByDay = sessions.reduce<
     Record<string, { sessions: Session[]; totalMinutes: number }>
@@ -165,7 +164,7 @@ export default function SessionsByDay() {
 
   // توليد النجوم
   function renderStars(totalMinutes: number) {
-    const fraction = Math.min(totalMinutes / dailyTargetMinutes, 1);
+    const fraction = Math.min(totalMinutes / (dailyTarget * 60), 1);
     const totalStars = 3;
     const filledStars = fraction * totalStars;
 

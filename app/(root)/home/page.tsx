@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircleIcon, CheckCircle2Icon, Star } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -34,6 +35,9 @@ export default function Home() {
 
   const [Alertsuccess, setsuccess] = useState(false);
   const [AlertError, setAlertError] = useState(false);
+  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+  const [dailyTarget, setDailyTarget] = useState(4); // القيمة الافتراضية
+  const [targetInput, setTargetInput] = useState(dailyTarget);
 
   const projects = [
     { id: "proj-1", name: "مشروع ألف" },
@@ -96,6 +100,7 @@ export default function Home() {
           <AlertDescription>انت لم تضع ساعات ودقائق للجلسة.</AlertDescription>
         </Alert>
       )}
+      
       <Card className="shadow-none border-none dark:bg-[#0F172B]">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 ">
@@ -187,19 +192,45 @@ export default function Home() {
       </Card>
 
       <Card className="shadow-none border-none dark:bg-[#0F172B]">
-        <CardTitle className="text-center text-lg font-semibold">
-          الهدف اليومي
+        <CardTitle className="text-center text-lg font-semibold flex items-center justify-center gap-2">
+          <span>الهدف اليومي</span>
         </CardTitle>
         <CardContent className="flex flex-col items-center">
           <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setTargetDialogOpen(true)}>
             <Star className="text-yellow-500" />
-            <span className="text-lg font-semibold">4 نجوم</span>
+          </Button>
+            <span className="text-lg font-semibold">{dailyTarget} نجوم</span>
           </div>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            أكمل 4 ساعات من العمل اليوم لتحقيق الهدف.
+            أكمل {dailyTarget} ساعات من العمل اليوم لتحقيق الهدف.
           </p>
         </CardContent>
       </Card>
+
+      {/* دايلوج تحديد الهدف اليومي */}
+      <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تحديد الهدف اليومي</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label htmlFor="target">عدد الساعات المطلوبة يوميًا</Label>
+            <Input
+              id="target"
+              type="number"
+              min={1}
+              value={targetInput}
+              onChange={e => setTargetInput(Number(e.target.value))}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="ghost" onClick={() => setTargetDialogOpen(false)}>إلغاء</Button>
+            <Button onClick={() => { setDailyTarget(targetInput); setTargetDialogOpen(false); }}>حفظ</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
