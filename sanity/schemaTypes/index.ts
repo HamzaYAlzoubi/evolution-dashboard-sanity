@@ -1,8 +1,6 @@
-import { type SchemaTypeDefinition } from 'sanity'
+import user from './User'
+import project from './Project'
+import subProject from './SubProject'
+import session from './Session'
 
-import { author } from './Author'
-// import { startup } from './schemaTypes/startup'
-
-export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [author],
-}
+export default [user, project, subProject, session]
