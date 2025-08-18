@@ -13,18 +13,85 @@
  */
 
 // Source: schema.json
-export type Author = {
+export type Session = {
   _id: string;
-  _type: "author";
+  _type: "session";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  id?: number;
+  date?: string;
+  hours?: number;
+  minutes?: number;
+  notes?: string;
+  user?: {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "user";
+  };
+  project?: {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "project";
+  } | {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "subProject";
+  };
+};
+
+export type SubProject = {
+  _id: string;
+  _type: "subProject";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
   name?: string;
-  username?: string;
+  status?: "\u0646\u0634\u0637" | "\u0645\u0643\u062A\u0645\u0644" | "\u0645\u0624\u062C\u0644";
+  hours?: number;
+  minutes?: number;
+  project?: {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "project";
+  };
+};
+
+export type Project = {
+  _id: string;
+  _type: "project";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  status?: "\u0646\u0634\u0637" | "\u0645\u0643\u062A\u0645\u0644" | "\u0645\u0624\u062C\u0644";
+  user?: {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "user";
+  };
+  subProjects?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "subProject";
+  }>;
+};
+
+export type User = {
+  _id: string;
+  _type: "user";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
   email?: string;
-  img?: string;
-  bio?: string;
+  dailyTarget?: number;
 };
 
 export type SanityImagePaletteSwatch = {
@@ -145,5 +212,5 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = Author | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = Session | SubProject | Project | User | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
