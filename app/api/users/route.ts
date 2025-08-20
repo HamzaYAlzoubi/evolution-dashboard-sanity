@@ -1,38 +1,104 @@
-import { writeClient } from "@/sanity/lib/write-client";
-import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
+import { writeClient } from "@/sanity/lib/write-client"
+import { NextResponse } from "next/server"
+import { hash } from "bcryptjs"
+
+export async function GET() {
+  try {
+    const users = await writeClient.fetch(`
+      *[_type == 'user'] {
+        _id,
+        name,
+        email,
+        dailyTarget,
+        _createdAt,
+        _updatedAt
+      }
+    `)
+
+    return NextResponse.json({
+      success: true,
+      data: users,
+    })
+  } catch (error) {
+    console.error("Users fetch error:", error)
+    return NextResponse.json(
+      { success: false, error: "حدث خطأ أثناء جلب البيانات" },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { name, email, password, dailyTarget } = body;
-
-  if (!name || !email || !password) {
-    return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
-  }
-
   try {
+    const body = await req.json()
+    const { name, email, password, dailyTarget } = body
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { success: false, error: "جميع الحقول مطلوبة" },
+        { status: 400 }
+      )
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { success: false, error: "البريد الإلكتروني غير صحيح" },
+        { status: 400 }
+      )
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return NextResponse.json(
+        { success: false, error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" },
+        { status: 400 }
+      )
+    }
+
     // Check if user with the same email already exists
-    const existingUser = await writeClient.fetch(`*[_type == 'user' && email == $email][0]`, { email });
+    const existingUser = await writeClient.fetch(
+      `*[_type == 'user' && email == $email][0]`,
+      { email }
+    )
 
     if (existingUser) {
-      return NextResponse.json({ success: false, error: "User with this email already exists" }, { status: 409 });
+      return NextResponse.json(
+        { success: false, error: "هذا البريد الإلكتروني مسجل بالفعل" },
+        { status: 409 }
+      )
     }
 
     // Hash the password
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await hash(password, 12)
 
     // Create new user
     const result = await writeClient.create({
       _type: "user",
-      name: name,
-      email: email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
       dailyTarget: dailyTarget || 4,
-    });
+    })
 
-    return NextResponse.json({ success: true, data: result }, { status: 201 });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ success: false, error: "Failed to create user" }, { status: 500 });
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = result
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: userWithoutPassword,
+        message: "تم إنشاء الحساب بنجاح",
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error("User creation error:", error)
+    return NextResponse.json(
+      { success: false, error: "حدث خطأ أثناء إنشاء الحساب" },
+      { status: 500 }
+    )
   }
 }

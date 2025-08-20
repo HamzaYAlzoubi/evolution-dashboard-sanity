@@ -1,64 +1,91 @@
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+"use client"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircleIcon, Loader2 } from "lucide-react";
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Link from "next/link"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { signIn, useSession } from "next-auth/react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircleIcon, Loader2 } from "lucide-react"
 
-function LoginFormContent({ className, ...props }: React.ComponentProps<"div">) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+function LoginFormContent({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { data: session, status } = useSession()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      router.replace("/home")
+    }
+  }, [session, status, router])
 
   useEffect(() => {
-    const errorParam = searchParams.get("error");
+    const errorParam = searchParams.get("error")
     if (errorParam === "CredentialsSignin") {
-      setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+      setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.")
     } else if (errorParam) {
-      setError("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.");
+      setError("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.")
     }
-  }, [searchParams]);
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
 
     try {
       const signInRes = await signIn("credentials", {
         redirect: false,
         email,
         password,
-      });
+      })
 
       if (signInRes && signInRes.ok) {
-        router.replace("/home"); // Use replace to avoid adding login to history
+        router.replace("/home") // Use replace to avoid adding login to history
       } else {
         // The useEffect will catch the error from the URL if redirect happens
         // but we can set a state here for immediate feedback if redirect is false
-        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.")
       }
     } catch (err) {
-      setError("حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+      setError("حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
+  // Show loading while checking session
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    )
+  }
+
+  // Don't render form if already authenticated
+  if (status === "authenticated") {
+    return null
+  }
 
   return (
     <div className={cn("flex flex-col gap-4", className)} {...props}>
@@ -111,7 +138,11 @@ function LoginFormContent({ className, ...props }: React.ComponentProps<"div">) 
             </div>
             <div className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "تسجيل الدخول"}
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  "تسجيل الدخول"
+                )}
               </Button>
               <Button variant="outline" className="w-full" disabled={isLoading}>
                 تسجيل الدخول باستخدام Google
@@ -127,13 +158,9 @@ function LoginFormContent({ className, ...props }: React.ComponentProps<"div">) 
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
 export function LoginForm(props: React.ComponentProps<"div">) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginFormContent {...props} />
-    </Suspense>
-  );
+  return <LoginFormContent {...props} />
 }
