@@ -24,17 +24,10 @@ import {
 } from "@/components/ui/dialog"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
-
-
-
 import { sanityClient } from "@/sanity/lib/client";
 import { PROJECT_QUERY } from "@/sanity/lib/queries";
 
 const PROJECT = await sanityClient.fetch(PROJECT_QUERY);
-
-console.log(PROJECT) // => API
-
-
 
 
 export default function Home() {
@@ -81,12 +74,6 @@ export default function Home() {
   const [targetDialogOpen, setTargetDialogOpen] = useState(false)
   const [dailyTarget, setDailyTarget] = useState(session?.user?.dailyTarget || 4) // Use session data
   const [targetInput, setTargetInput] = useState(dailyTarget)
-
-  const projects = [
-    { id: "proj-1", name: "مشروع ألف" },
-    { id: "proj-2", name: "مشروع باء" },
-    { id: "proj-3", name: "مشروع جيم" },
-  ]
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -172,7 +159,7 @@ export default function Home() {
               <Label htmlFor="project">المشروع</Label>
 
               <Select
-                value={PROJECT[0]?._id || ""}
+                value={formData.project}
                 onValueChange={handleProjectChange}
               >
                 <SelectTrigger
@@ -182,7 +169,7 @@ export default function Home() {
                   <SelectValue placeholder="اختر المشروع" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((p) => (
+                  {PROJECT.map((p:any) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}
                     </SelectItem>
