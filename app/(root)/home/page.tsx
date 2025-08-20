@@ -25,12 +25,17 @@ import {
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
+
+
 import { sanityClient } from "@/sanity/lib/client";
-import { USER_QUERY } from "@/sanity/lib/queries";
+import { PROJECT_QUERY } from "@/sanity/lib/queries";
 
-const USERss = await sanityClient.fetch(USER_QUERY);
+const PROJECT = await sanityClient.fetch(PROJECT_QUERY);
 
-console.log(USERss) // => API
+console.log(PROJECT) // => API
+
+
+
 
 export default function Home() {
   const { data: session, status } = useSession()
@@ -167,7 +172,7 @@ export default function Home() {
               <Label htmlFor="project">المشروع</Label>
 
               <Select
-                value={formData.project}
+                value={PROJECT[0]?._id || ""}
                 onValueChange={handleProjectChange}
               >
                 <SelectTrigger
