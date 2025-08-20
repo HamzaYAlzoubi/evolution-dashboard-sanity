@@ -67,7 +67,7 @@ export default function Home() {
   const [Alertsuccess, setsuccess] = useState(false)
   const [AlertError, setAlertError] = useState(false)
   const [targetDialogOpen, setTargetDialogOpen] = useState(false)
-  const [dailyTarget, setDailyTarget] = useState(session?.dailyTarget || 4) // Use session data
+  const [dailyTarget, setDailyTarget] = useState(session?.user?.dailyTarget || 4) // Use session data
   const [targetInput, setTargetInput] = useState(dailyTarget)
 
   const projects = [
@@ -121,7 +121,7 @@ export default function Home() {
       {/* Header with user info and sign out */}
       <div className="absolute top-4 right-4 flex items-center gap-4">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          مرحباً، {session?.name || session?.email}
+          مرحباً، {session?.user?.name || session?.user.email}
         </div>
         <Button
           variant="outline"
