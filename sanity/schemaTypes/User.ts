@@ -15,10 +15,16 @@ export default {
       unique: true,
     },
     {
+      name: "password",
+      title: "Password",
+      type: "string",
+      hidden: true, // Hide from Sanity Studio for security
+    },
+    {
       name: "dailyTarget",
       title: "Daily Target (hours)",
       type: "number",
       initialValue: 4,
     },
   ],
-};
+}
