@@ -1,9 +1,5 @@
-import user from './User'
-import project from './Project'
-import subProject from './SubProject'
-import session from './Session'
+import { type SchemaTypeDefinition } from 'sanity'
 
-export const schema = [user, project, subProject, session];
-export default schema;
-
-
+export const schema: { types: SchemaTypeDefinition[] } = {
+  types: [],
+}

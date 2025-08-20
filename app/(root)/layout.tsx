@@ -9,9 +9,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect("/login");
-  }
+  // if (!session) {
+  //   redirect("/login");
+  // }
   return (
     <div dir="rtl" className="md:mr-64 duration-300">
       <Sidebar />

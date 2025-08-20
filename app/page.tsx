@@ -4,11 +4,11 @@ import { redirect } from "next/navigation";
 export default async function Home() {
 
   const session = await getServerSession(authOptions);
-  if (session){
-    redirect("/home");
-  }else {
-    redirect("/login");
-  }
+  // if (session){
+  //   redirect("/home");
+  // }else {
+  //   redirect("/login");
+  // }
   return (
     <>
     </>
