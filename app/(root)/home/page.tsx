@@ -25,6 +25,13 @@ import {
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
+import { sanityClient } from "@/sanity/lib/client";
+import { USER_QUERY } from "@/sanity/lib/queries";
+
+const USERss = await sanityClient.fetch(USER_QUERY);
+
+console.log(USERss) // => API
+
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
