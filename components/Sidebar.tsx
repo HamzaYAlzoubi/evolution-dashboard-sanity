@@ -12,12 +12,22 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [dark, setDark] = useState(false)
 
+  // Load dark mode preference from localStorage on component mount
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem("darkMode")
+    if (savedDarkMode !== null) {
+      setDark(JSON.parse(savedDarkMode))
+    }
+  }, [])
+
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark")
     } else {
       document.documentElement.classList.remove("dark")
     }
+    // Save dark mode preference to localStorage
+    localStorage.setItem("darkMode", JSON.stringify(dark))
   }, [dark])
 
   const handleSignOut = () => {
