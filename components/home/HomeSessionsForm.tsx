@@ -38,8 +38,8 @@ export default function HomeSessionsForm() {
   const [formData, setFormData] = useState({
     project: "",
     date: "",
-    hours: 0,
-    minutes: 0,
+    hours: "", // Changed from 0 to ""
+    minutes: "", // Changed from 0 to ""
     notes: "",
   });
 
@@ -103,7 +103,7 @@ export default function HomeSessionsForm() {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: name === "hours" || name === "minutes" ? Number(value) : value,
+      [name]: value, // Now always store as string
     }));
   };
 
@@ -160,8 +160,8 @@ export default function HomeSessionsForm() {
         setFormData({
           project: "",
           date: new Date().toISOString().split("T")[0],
-          hours: 0,
-          minutes: 0,
+          hours: "", // Changed from 0 to ""
+          minutes: "", // Changed from 0 to ""
           notes: "",
         });
       } else {

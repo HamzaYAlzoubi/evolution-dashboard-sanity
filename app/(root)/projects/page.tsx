@@ -35,8 +35,8 @@ import { USER_QUERY } from "@/sanity/lib/queries";
 
 type Session = {
   _id: string;
-  hours: number;
-  minutes: number;
+  hours: string; // Changed from number to string
+  minutes: string; // Changed from number to string
 };
 
 type SubProject = {
@@ -108,7 +108,7 @@ export default function ProjectsPage() {
   const calculateSessionTime = (sessions: Session[]) => {
     if (!sessions) return { hours: 0, minutes: 0 };
     const totalMinutes = sessions.reduce(
-      (acc, session) => acc + (session.hours || 0) * 60 + (session.minutes || 0),
+      (acc, session) => acc + (Number(session.hours) || 0) * 60 + (Number(session.minutes) || 0),
       0
     );
     const hours = Math.floor(totalMinutes / 60);

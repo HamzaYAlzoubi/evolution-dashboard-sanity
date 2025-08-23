@@ -11,12 +11,12 @@ export default {
     {
       name: "hours",
       title: "Hours",
-      type: "number",
+      type: "string",
     },
     {
       name: "minutes",
       title: "Minutes",
-      type: "number",
+      type: "string",
     },
     {
       name: "notes",
