@@ -21,10 +21,10 @@ export default {
       },
     },
     {
-      name: "user",
-      title: "User",
-      type: "reference",
-      to: [{ type: "user" }],
+      name: "sessions",
+      title: "Sessions",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "session" }] }],
     },
     {
       name: "subProjects",

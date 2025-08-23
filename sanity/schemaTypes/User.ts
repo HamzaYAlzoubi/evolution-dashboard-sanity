@@ -26,5 +26,11 @@ export default {
       type: "number",
       initialValue: 4,
     },
+    {
+      name: "projects",
+      title: "Projects",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "project" }] }],
+    },
   ],
 }

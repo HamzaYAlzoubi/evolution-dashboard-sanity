@@ -28,8 +28,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 import { sanityClient } from "@/sanity/lib/client";
-import { PROJECT_QUERY } from "@/sanity/lib/queries";
-const PROJECT = await sanityClient.fetch(PROJECT_QUERY);
+import { USER_QUERY } from "@/sanity/lib/queries";
 
 import LinkStudio from "@/app/link";
 
@@ -44,12 +43,23 @@ export default function HomeSessionsForm() {
     notes: "",
   });
 
+  const [userData, setUserData] = useState<any>(null); // State to store fetched user data
+
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
       date: new Date().toISOString().split("T")[0],
     }));
   }, []);
+
+  // Fetch user data when session is available
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.id) {
+      sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
+        setUserData(data);
+      });
+    }
+  }, [status, session?.user?.id]); // Depend on status and user ID
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -71,14 +81,21 @@ export default function HomeSessionsForm() {
   if (status === "unauthenticated") {
     return null;
   }
+  
 
   const [Alertsuccess, setsuccess] = useState(false);
   const [AlertError, setAlertError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
-  const [dailyTarget, setDailyTarget] = useState(
-    session?.user?.dailyTarget || 4
-  ); // Use session data
+  const [dailyTarget, setDailyTarget] = useState(4);
   const [targetInput, setTargetInput] = useState(dailyTarget);
+
+  useEffect(() => {
+    if (userData?.dailyTarget) {
+      setDailyTarget(userData.dailyTarget);
+      setTargetInput(userData.dailyTarget);
+    }
+  }, [userData]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -94,13 +111,11 @@ export default function HomeSessionsForm() {
     setFormData((prev) => ({ ...prev, date: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      (!formData.hours || Number(formData.hours) === 0) &&
-      (!formData.minutes || Number(formData.minutes) === 0)
-    ) {
+    if (!formData.project) {
+      setErrorMessage("الرجاء اختيار مشروع أولاً.");
       setAlertError(true);
       setTimeout(() => {
         setAlertError(false);
@@ -108,12 +123,57 @@ export default function HomeSessionsForm() {
       return;
     }
 
-    console.log("بيانات الفورم:", formData);
+    if (
+      (!formData.hours || Number(formData.hours) === 0) &&
+      (!formData.minutes || Number(formData.minutes) === 0)
+    ) {
+      setErrorMessage("انت لم تضع ساعات ودقائق للجلسة.");
+      setAlertError(true);
+      setTimeout(() => {
+        setAlertError(false);
+      }, 3000);
+      return;
+    }
 
-    setsuccess(true);
-    setTimeout(() => {
-      setsuccess(false);
-    }, 3000);
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          userId: session?.user?.id,
+          projectId: formData.project,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setsuccess(true);
+        setTimeout(() => {
+          setsuccess(false);
+        }, 3000);
+        setFormData({
+          project: "",
+          date: new Date().toISOString().split("T")[0],
+          hours: 0,
+          minutes: 0,
+          notes: "",
+        });
+      } else {
+        setErrorMessage("فشل في تسجيل الجلسة.");
+        setAlertError(true);
+        setTimeout(() => {
+          setAlertError(false);
+        }, 3000);
+      }
+    } catch (error) {
+      setErrorMessage("فشل في تسجيل الجلسة.");
+      setAlertError(true);
+      setTimeout(() => {
+        setAlertError(false);
+      }, 3000);
+    }
   };
 
   const handleSignOut = () => {
@@ -121,7 +181,7 @@ export default function HomeSessionsForm() {
   };
 
   return (
-    <div className="flex r flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
+    <div className="flex relative flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
       {/* Header with user info and sign out */}
       <div className="absolute top-4 right-4 flex items-center gap-4">
         <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -154,7 +214,7 @@ export default function HomeSessionsForm() {
         <Alert className="absolute top-20 w-[90%]" variant="destructive">
           <AlertCircleIcon />
           <AlertTitle>فشل! لم يتم تسجيل الجلسة.</AlertTitle>
-          <AlertDescription>انت لم تضع ساعات ودقائق للجلسة.</AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
 
@@ -176,7 +236,7 @@ export default function HomeSessionsForm() {
                   <SelectValue placeholder="اختر المشروع" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PROJECT.map((p: any) => (
+                  {userData?.projects?.map((p: any) => (
                     <SelectGroup key={p._id}>
                       <SelectLabel className="text-red-600">{p.name}</SelectLabel>
                       <SelectItem value={p._id}>{p.name}</SelectItem>

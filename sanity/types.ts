@@ -23,12 +23,6 @@ export type Session = {
   hours?: number;
   minutes?: number;
   notes?: string;
-  user?: {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "user";
-  };
   project?: {
     _ref: string;
     _type: "reference";
@@ -50,14 +44,13 @@ export type SubProject = {
   _rev: string;
   name?: string;
   status?: "\u0646\u0634\u0637" | "\u0645\u0643\u062A\u0645\u0644" | "\u0645\u0624\u062C\u0644";
-  hours?: number;
-  minutes?: number;
-  project?: {
+  sessions?: Array<{
     _ref: string;
     _type: "reference";
     _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "project";
-  };
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "session";
+  }>;
 };
 
 export type Project = {
@@ -68,12 +61,13 @@ export type Project = {
   _rev: string;
   name?: string;
   status?: "\u0646\u0634\u0637" | "\u0645\u0643\u062A\u0645\u0644" | "\u0645\u0624\u062C\u0644";
-  user?: {
+  sessions?: Array<{
     _ref: string;
     _type: "reference";
     _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "user";
-  };
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "session";
+  }>;
   subProjects?: Array<{
     _ref: string;
     _type: "reference";
@@ -93,6 +87,13 @@ export type User = {
   email?: string;
   password?: string;
   dailyTarget?: number;
+  projects?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "project";
+  }>;
 };
 
 export type SanityImagePaletteSwatch = {

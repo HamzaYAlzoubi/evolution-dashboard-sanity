@@ -21,20 +21,10 @@ export default {
       },
     },
     {
-      name: "hours",
-      title: "Hours",
-      type: "number",
-    },
-    {
-      name: "minutes",
-      title: "Minutes",
-      type: "number",
-    },
-    {
-      name: "project",
-      title: "Parent Project",
-      type: "reference",
-      to: [{ type: "project" }],
+      name: "sessions",
+      title: "Sessions",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "session" }] }],
     },
   ],
 };

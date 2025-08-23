@@ -24,12 +24,6 @@ export default {
       type: "text",
     },
     {
-      name: "user",
-      title: "User",
-      type: "reference",
-      to: [{ type: "user" }],
-    },
-    {
       name: "project",
       title: "Project",
       type: "reference",

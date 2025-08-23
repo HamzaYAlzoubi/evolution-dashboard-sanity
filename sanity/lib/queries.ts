@@ -1,11 +1,23 @@
 import { defineQuery } from "next-sanity";
 
 export const USER_QUERY = defineQuery(`
-  *[_type == "user"]{
+  *[_type == "user" && _id == $userId][0]{
     _id,
     name,
     email,
-    dailyTarget
+    dailyTarget,
+    projects[]->{
+      _id,
+      name,
+      status,
+      sessions[]->{_id, date, hours, minutes, notes},
+      subProjects[]->{
+        _id,
+        name,
+        status,
+        sessions[]->{_id, date, hours, minutes, notes}
+      }
+    }
   }
 `);
 
@@ -14,8 +26,7 @@ export const PROJECT_QUERY = defineQuery(`
     _id,
     name,
     status,
-    user->{_id, name, email},
-    subProjects[]->{_id, name, status, hours, minutes}
+    subProjects[]->{_id, name, status}
   }
 `);
 
@@ -23,10 +34,7 @@ export const SUBPROJECT_QUERY = defineQuery(`
   *[_type == "subProject"]{
     _id,
     name,
-    status,
-    hours,
-    minutes,
-    project->{_id, name}
+    status
   }
 `);
 
@@ -37,7 +45,6 @@ export const SESSION_QUERY = defineQuery(`
     hours,
     minutes,
     notes,
-    user->{_id, name, email},
     project->{_id, name},
   }
 `);
