@@ -141,31 +141,33 @@ export default function ProjectsPage() {
   // دالة تحويل الوقت للتنسيق الجديد (بالإنجليزي)
   function formatTimeDetailed(hours: number, minutes: number) {
     const totalMinutes = hours * 60 + minutes;
-    if (totalMinutes < 24 * 60) {
-      // أقل من 24 ساعة: عرض بالشكل العادي  "Xh Ym"
-      return `${hours}h ${minutes}m`;
-    }
+    if (totalMinutes === 0) return "0m"; // Handle zero time
 
-    let remainingMinutes = totalMinutes;
+    let parts = [];
 
-    const weeks = Math.floor(remainingMinutes / (7 * 24 * 60));
-    remainingMinutes -= weeks * 7 * 24 * 60;
+    const weeks = Math.floor(totalMinutes / (7 * 24 * 60));
+    let remainingMinutes = totalMinutes % (7 * 24 * 60);
 
     const days = Math.floor(remainingMinutes / (24 * 60));
-    remainingMinutes -= days * 24 * 60;
+    remainingMinutes %= (24 * 60);
 
     const hrs = Math.floor(remainingMinutes / 60);
     const mins = remainingMinutes % 60;
 
-    let parts = [];
     if (weeks > 0) parts.push(`${weeks}w`);
     if (days > 0) parts.push(`${days}d`);
     if (hrs > 0) parts.push(`${hrs}h`);
     if (mins > 0) parts.push(`${mins}m`);
-    if (parts.length === 0) return "0m";
 
     return parts.join(", ");
   }
+
+  const formatSimpleTime = (hours: number, minutes: number) => {
+    if (hours === 0 && minutes === 0) return "0m";
+    if (hours === 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  };
 
   
 
@@ -224,7 +226,7 @@ export default function ProjectsPage() {
                         totalTime.hours,
                         totalTime.minutes
                       )
-                    : `${totalTime.hours}h ${totalTime.minutes}m`}
+                    : formatSimpleTime(totalTime.hours, totalTime.minutes)}
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

@@ -100,7 +100,11 @@ export default function HomeSessionsForm() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: name === "hours" || name === "minutes" ? Number(value) : value,
+    }));
   };
 
   const handleProjectChange = (value: string) => {
