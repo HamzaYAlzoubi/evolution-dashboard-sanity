@@ -127,7 +127,10 @@ export default function ProjectsPage() {
   // Loading states
   const [isAddingProject, setIsAddingProject] = useState(false)
   const [isAddingSubProject, setIsAddingSubProject] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [subProjectSuccess, setSubProjectSuccess] = useState(false)
+  const [editSuccess, setEditSuccess] = useState(false)
   const [forceUpdate, setForceUpdate] = useState(0)
 
   // حسّاسات السحب - must be called at top level
@@ -392,6 +395,14 @@ export default function ProjectsPage() {
     fetchProjects()
   }, [fetchProjects])
 
+  // Debug: Log projects state changes
+  useEffect(() => {
+    console.log(
+      "Projects state updated:",
+      projects.map((p) => ({ id: p._id, name: p.name, status: p.status }))
+    )
+  }, [projects])
+
   // Listen for data updates to refresh projects
   useEffect(() => {
     const handleDataUpdate = () => {
@@ -433,30 +444,64 @@ export default function ProjectsPage() {
     })
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
 
-    // For now, just remove from local state since we don't have delete API implemented
-    // In a real implementation, you'd call the delete API endpoints
-    if (deleteTarget.type === "main") {
-      const newProjects = projects.filter(
-        (p) => p._id !== deleteTarget.projectId
-      )
-      setProjects(newProjects)
-    } else {
-      const newProjects = projects.map((p) =>
-        p._id === deleteTarget.projectId
-          ? {
-              ...p,
-              subProjects: p.subProjects?.filter(
-                (sp) => sp._id !== deleteTarget.subId
-              ),
-            }
-          : p
-      )
-      setProjects(newProjects)
+    setIsDeleting(true)
+    try {
+      if (deleteTarget.type === "main") {
+        // Delete main project
+        const response = await fetch(
+          `/api/projects/${deleteTarget.projectId}`,
+          {
+            method: "DELETE",
+          }
+        )
+
+        const result = await response.json()
+        if (result.success) {
+          // Remove from local state
+          const newProjects = projects.filter(
+            (p) => p._id !== deleteTarget.projectId
+          )
+          setProjects(newProjects)
+          events.emit(EVENTS.PROJECTS_UPDATED)
+        } else {
+          console.error("Error deleting project:", result.error)
+          return
+        }
+      } else {
+        // Delete subproject
+        const response = await fetch(`/api/subprojects/${deleteTarget.subId}`, {
+          method: "DELETE",
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          // Remove from local state
+          const newProjects = projects.map((p) =>
+            p._id === deleteTarget.projectId
+              ? {
+                  ...p,
+                  subProjects: p.subProjects?.filter(
+                    (sp) => sp._id !== deleteTarget.subId
+                  ),
+                }
+              : p
+          )
+          setProjects(newProjects)
+          events.emit(EVENTS.SUBPROJECTS_UPDATED)
+        } else {
+          console.error("Error deleting subproject:", result.error)
+          return
+        }
+      }
+      setDeleteTarget(null)
+    } catch (error) {
+      console.error("Error deleting:", error)
+    } finally {
+      setIsDeleting(false)
     }
-    setDeleteTarget(null)
   }
 
   const calcTotalTime = (
@@ -580,30 +625,130 @@ export default function ProjectsPage() {
   }
 
   // حفظ تعديل المشروع أو الفرعي
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editTarget) return
-    if (editTarget.type === "main") {
-      const newProjects = projects.map((p) =>
-        p._id === editTarget.projectId
-          ? { ...p, name: editName, status: editStatus }
-          : p
-      )
-      setProjects(newProjects)
-    } else {
-      const newProjects = projects.map((p) => {
-        if (p._id === editTarget.projectId) {
-          const newSubProjects = p.subProjects?.map((sp) =>
-            sp._id === editTarget.subId
-              ? { ...sp, name: editName, status: editStatus }
-              : sp
-          )
-          return { ...p, subProjects: newSubProjects }
+
+    setIsEditing(true)
+    try {
+      if (editTarget.type === "main") {
+        // Update main project
+        const response = await fetch(`/api/projects/${editTarget.projectId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: editName,
+            status: editStatus,
+          }),
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          console.log("Project update successful:", {
+            editName,
+            editStatus,
+            projectId: editTarget.projectId,
+          })
+
+          // Update local state immediately using callback to ensure we have latest state
+          setProjects((prevProjects) => {
+            const newProjects = prevProjects.map((p) =>
+              p._id === editTarget.projectId
+                ? { ...p, name: editName, status: editStatus }
+                : p
+            )
+            console.log(
+              "Updated projects state:",
+              newProjects.map((p) => ({ id: p._id, status: p.status }))
+            )
+            return newProjects
+          })
+
+          // Force a re-render immediately
+          setForceUpdate((prev) => prev + 1)
+
+          // Additional force update after a small delay
+          setTimeout(() => {
+            setForceUpdate((prev) => prev + 1)
+          }, 50)
+
+          events.emit(EVENTS.PROJECTS_UPDATED)
+          setEditSuccess(true)
+          setTimeout(() => setEditSuccess(false), 3000)
+        } else {
+          console.error("Error updating project:", result.error)
+          return
         }
-        return p
-      })
-      setProjects(newProjects)
+      } else {
+        // Update subproject
+        const response = await fetch(`/api/subprojects/${editTarget.subId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: editName,
+            status: editStatus,
+          }),
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          console.log("Subproject update successful:", {
+            editName,
+            editStatus,
+            subId: editTarget.subId,
+          })
+
+          // Update local state immediately using callback to ensure we have latest state
+          setProjects((prevProjects) => {
+            const newProjects = prevProjects.map((p) => {
+              if (p._id === editTarget.projectId) {
+                const newSubProjects = p.subProjects?.map((sp) =>
+                  sp._id === editTarget.subId
+                    ? { ...sp, name: editName, status: editStatus }
+                    : sp
+                )
+                return { ...p, subProjects: newSubProjects }
+              }
+              return p
+            })
+            console.log(
+              "Updated subprojects state:",
+              newProjects.map((p) => ({
+                id: p._id,
+                subProjects: p.subProjects?.map((sp) => ({
+                  id: sp._id,
+                  status: sp.status,
+                })),
+              }))
+            )
+            return newProjects
+          })
+
+          // Force a re-render immediately
+          setForceUpdate((prev) => prev + 1)
+
+          // Additional force update after a small delay
+          setTimeout(() => {
+            setForceUpdate((prev) => prev + 1)
+          }, 50)
+
+          events.emit(EVENTS.SUBPROJECTS_UPDATED)
+          setEditSuccess(true)
+          setTimeout(() => setEditSuccess(false), 3000)
+        } else {
+          console.error("Error updating subproject:", result.error)
+          return
+        }
+      }
+      setEditDialogOpen(false)
+    } catch (error) {
+      console.error("Error saving edit:", error)
+    } finally {
+      setIsEditing(false)
     }
-    setEditDialogOpen(false)
   }
 
   // حفظ مشروع جديد
@@ -780,12 +925,18 @@ export default function ProjectsPage() {
     <div className="p-6 space-y-4 bg-red-0">
       <div className="flex justify-between items-center gap-4 "></div>
 
-      {/* Success message for subproject creation */}
+      {/* Success messages */}
       {subProjectSuccess && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
           <span className="block sm:inline">
             تم إضافة المشروع الفرعي بنجاح!
           </span>
+        </div>
+      )}
+
+      {editSuccess && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+          <span className="block sm:inline">تم تحديث المشروع بنجاح!</span>
         </div>
       )}
 
@@ -833,7 +984,10 @@ export default function ProjectsPage() {
             // })
 
             return (
-              <SortableRow key={project._id} id={project._id}>
+              <SortableRow
+                key={`${project._id}-${project.status}`}
+                id={project._id}
+              >
                 <Card className="p-4 ">
                   <div
                     className="flex items-center justify-between cursor-pointer"
@@ -858,7 +1012,7 @@ export default function ProjectsPage() {
                             : "destructive"
                       }
                     >
-                      {project.status}
+                      {project.status} {/* Debug: {project._id} */}
                     </Badge>
 
                     <div className="flex items-center bg-green-5 ml-[-15px]">
@@ -922,7 +1076,10 @@ export default function ProjectsPage() {
                         {(project.subProjects?.length === 0 ||
                           !project.subProjects) && <p>لا يوجد مشاريع فرعية.</p>}
                         {project.subProjects?.map((subProject) => (
-                          <SortableRow key={subProject._id} id={subProject._id}>
+                          <SortableRow
+                            key={`${subProject._id}-${subProject.status}`}
+                            id={subProject._id}
+                          >
                             <Card
                               className="p-4 pt-2 pb-2 dark:border-gray-700 cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
@@ -938,7 +1095,7 @@ export default function ProjectsPage() {
                                       ? "default"
                                       : subProject.status === "مكتمل"
                                         ? "secondary"
-                                        : "outline"
+                                        : "destructive"
                                   }
                                 >
                                   {subProject.status}
@@ -1013,11 +1170,26 @@ export default function ProjectsPage() {
             <DialogTitle>هل أنت متأكد من الحذف؟</DialogTitle>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+            <Button
+              variant="ghost"
+              onClick={() => setDeleteTarget(null)}
+              disabled={isDeleting}
+            >
               إلغاء
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              حذف
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  حذف...
+                </div>
+              ) : (
+                "حذف"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1125,10 +1297,23 @@ export default function ProjectsPage() {
             </select>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={isEditing}
+            >
               إلغاء
             </Button>
-            <Button onClick={saveEdit}>حفظ</Button>
+            <Button onClick={saveEdit} disabled={isEditing}>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  حفظ...
+                </div>
+              ) : (
+                "حفظ"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
