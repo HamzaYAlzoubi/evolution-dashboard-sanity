@@ -1,15 +1,30 @@
 import { writeClient } from "@/sanity/lib/write-client"
 import { NextResponse } from "next/server"
 import { hash } from "bcryptjs"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/authOptions"
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح لك بالوصول" },
+        { status: 403 }
+      )
+    }
+
     const users = await writeClient.fetch(`
       *[_type == 'user'] {
         _id,
         name,
         email,
         dailyTarget,
+        role,
+        isActive,
+        lastLogin,
+        createdAt,
         _createdAt,
         _updatedAt
       }
@@ -41,6 +56,14 @@ export async function POST(req: Request) {
       )
     }
 
+    // Validate name length
+    if (name.trim().length < 2) {
+      return NextResponse.json(
+        { success: false, error: "الاسم يجب أن يكون حرفين على الأقل" },
+        { status: 400 }
+      )
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
@@ -61,7 +84,7 @@ export async function POST(req: Request) {
     // Check if user with the same email already exists
     const existingUser = await writeClient.fetch(
       `*[_type == 'user' && email == $email][0]`,
-      { email }
+      { email: email.toLowerCase().trim() }
     )
 
     if (existingUser) {
@@ -81,6 +104,9 @@ export async function POST(req: Request) {
       email: email.toLowerCase().trim(),
       password: hashedPassword,
       dailyTarget: dailyTarget || 4,
+      role: "user",
+      isActive: true,
+      createdAt: new Date().toISOString(),
     })
 
     // Remove password from response

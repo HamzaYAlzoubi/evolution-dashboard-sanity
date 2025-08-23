@@ -5,7 +5,9 @@ declare module "next-auth" {
     id: string
     email: string
     name: string
+    image?: string
     dailyTarget: number
+    role: string
   }
 
   interface Session {
@@ -13,7 +15,9 @@ declare module "next-auth" {
       id: string
       email: string
       name: string
+      image?: string
       dailyTarget: number
+      role: string
     }
   }
 }
@@ -22,5 +26,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     dailyTarget: number
+    role: string
   }
 }

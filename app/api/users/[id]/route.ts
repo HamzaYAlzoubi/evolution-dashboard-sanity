@@ -1,9 +1,20 @@
 import { writeClient } from "@/sanity/lib/write-client"
 import { NextRequest, NextResponse } from "next/server"
 import { hash } from "bcryptjs"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/authOptions"
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "يجب تسجيل الدخول" },
+        { status: 401 }
+      )
+    }
+
     const id = req.nextUrl.pathname.split("/").pop()
 
     if (!id) {
@@ -13,13 +24,26 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    // Users can only view their own profile unless they're admin
+    if (session.user.role !== "admin" && session.user.id !== id) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح لك بالوصول" },
+        { status: 403 }
+      )
+    }
+
     const user = await writeClient.fetch(
       `
       *[_type == 'user' && _id == $id][0] {
         _id,
         name,
         email,
+        image,
         dailyTarget,
+        role,
+        isActive,
+        lastLogin,
+        createdAt,
         _createdAt,
         _updatedAt
       }
@@ -49,6 +73,15 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "يجب تسجيل الدخول" },
+        { status: 401 }
+      )
+    }
+
     const body = await req.json()
     const { name, email, password, dailyTarget } = body
 
@@ -62,10 +95,26 @@ export async function PATCH(req: NextRequest) {
       )
     }
 
+    // Users can only update their own profile unless they're admin
+    if (session.user.role !== "admin" && session.user.id !== id) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح لك بالتحديث" },
+        { status: 403 }
+      )
+    }
+
     // Validate required fields
     if (!name || !email) {
       return NextResponse.json(
         { success: false, error: "الاسم والبريد الإلكتروني مطلوبان" },
+        { status: 400 }
+      )
+    }
+
+    // Validate name length
+    if (name.trim().length < 2) {
+      return NextResponse.json(
+        { success: false, error: "الاسم يجب أن يكون حرفين على الأقل" },
         { status: 400 }
       )
     }
@@ -131,11 +180,28 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح لك بالحذف" },
+        { status: 403 }
+      )
+    }
+
     const id = req.nextUrl.pathname.split("/").pop()
 
     if (!id) {
       return NextResponse.json(
         { success: false, error: "معرف المستخدم مطلوب" },
+        { status: 400 }
+      )
+    }
+
+    // Prevent admin from deleting themselves
+    if (session.user.id === id) {
+      return NextResponse.json(
+        { success: false, error: "لا يمكنك حذف حسابك الخاص" },
         { status: 400 }
       )
     }

@@ -1,188 +1,240 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from "@/components/ui/select";
-import { ChevronDown, ChevronUp, Star } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+} from "@/components/ui/select"
+import { ChevronDown, ChevronUp, Star } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { sanityClient } from "@/sanity/lib/client"
+import {
+  USER_PROJECTS_WITH_SUBPROJECTS_QUERY,
+  PROJECTS_WITH_SUBPROJECTS_QUERY,
+} from "@/sanity/lib/queries"
+import { events, EVENTS } from "@/lib/events"
 
-type Project = {
-  id: string;
-  name: string;
-  subProjects?: { id: string; name: string }[];
-};
+interface Project {
+  _id: string
+  name: string
+  status: string
+  user: { _id: string; name: string; email: string }
+  subProjects?: Array<{
+    _id: string
+    name: string
+    status: string
+    hours: number
+    minutes: number
+  }>
+}
 
-type Session = {
-  id: string;
-  projectId?: string;
-  projectName?: string;
-  date: string;
-  hours: number;
-  minutes: number;
-  notes: string;
-};
-
-const fakeProjects: Project[] = [
-  {
-    id: "proj-1",
-    name: "مشروع ألف",
-    subProjects: [{ id: "sub-1", name: "فرعي 1" }],
-  },
-  {
-    id: "proj-2",
-    name: "مشروع باء",
-    subProjects: [{ id: "sub-2", name: "فرjjjjjjعي 2" }],
-  },
-  { id: "proj-3", name: "مشروع جيم" },
-];
-
-const fakeSessions: Session[] = [
-  {
-    id: "sess-1",
-    projectId: "proj-1",
-    projectName: "مشروع ألف",
-    date: "2025-08-10",
-    hours: 1,
-    minutes: 30,
-    notes: "مراجعة أولية",
-  },
-  {
-    id: "sess-2",
-    projectId: "proj-1",
-    projectName: "مشروع ألف",
-    date: "2025-08-10",
-    hours: 0,
-    minutes: 45,
-    notes: "تصميم الواجهة",
-  },
-  {
-    id: "sess-3",
-    date: "2025-08-11",
-    hours: 5,
-    minutes: 0,
-    notes: "جلسة بدون مشروع",
-  },
-  {
-    id: "sess-4",
-    projectId: "proj-2",
-    projectName: "مشروع باء",
-    date: "2025-08-11",
-    hours: 1,
-    minutes: 15,
-    notes: "برمجة المكونات",
-  },
-];
+interface Session {
+  _id: string
+  date: string
+  hours: number
+  minutes: number
+  notes: string
+  user: { _id: string; name: string; email: string }
+  project?: { _id: string; name: string }
+}
 
 export default function SessionsByDay() {
-  const [sessions, setSessions] = useState<Session[]>(fakeSessions);
-  const [expandedDays, setExpandedDays] = useState<string[]>([]);
-  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [detailsSession, setDetailsSession] = useState<Session | null>(null);
-  const [dailyTarget, setDailyTarget] = useState(4); // القيمة الافتراضية
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  const [projects, setProjects] = useState<Project[]>([])
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
+  const [expandedDays, setExpandedDays] = useState<string[]>([])
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [detailsSession, setDetailsSession] = useState<Session | null>(null)
+  const [dailyTarget] = useState(4)
+  const [isAssigningProject, setIsAssigningProject] = useState<string | null>(
+    null
+  )
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login")
+    }
+  }, [status, router])
+
+  // Fetch projects and sessions from Sanity
+  const fetchData = useCallback(async () => {
+    if (status !== "authenticated") return
+
+    try {
+      setLoading(true)
+
+      // Fetch projects
+      const query =
+        session?.user?.role === "admin"
+          ? PROJECTS_WITH_SUBPROJECTS_QUERY
+          : USER_PROJECTS_WITH_SUBPROJECTS_QUERY
+
+      const projectsData = await sanityClient.fetch(
+        query,
+        session?.user?.role !== "admin" ? { userId: session?.user?.id } : {}
+      )
+      setProjects(projectsData)
+
+      // Fetch sessions
+      const sessionsResponse = await fetch("/api/sessions")
+      const sessionsResult = await sessionsResponse.json()
+      if (sessionsResult.success) {
+        console.log("Sessions data:", sessionsResult.data)
+        if (sessionsResult.data.length > 0) {
+          console.log("First session project:", sessionsResult.data[0].project)
+        }
+        setSessions(sessionsResult.data)
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [status, session?.user?.role, session?.user?.id])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  // Listen for session updates to refresh data
+  useEffect(() => {
+    const handleSessionsUpdate = () => {
+      fetchData()
+    }
+
+    events.on(EVENTS.SESSIONS_UPDATED, handleSessionsUpdate)
+
+    return () => {
+      events.off(EVENTS.SESSIONS_UPDATED, handleSessionsUpdate)
+    }
+  }, [fetchData])
+
+  // Show loading while checking authentication or fetching data
+  if (status === "loading" || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated
+  if (status === "unauthenticated") {
+    return null
+  }
 
   const sessionsByDay = sessions.reduce<
     Record<string, { sessions: Session[]; totalMinutes: number }>
   >((acc, session) => {
     if (!acc[session.date])
-      acc[session.date] = { sessions: [], totalMinutes: 0 };
-    acc[session.date].sessions.push(session);
-    acc[session.date].totalMinutes += session.hours * 60 + session.minutes;
-    return acc;
-  }, {});
+      acc[session.date] = { sessions: [], totalMinutes: 0 }
+    acc[session.date].sessions.push(session)
+    acc[session.date].totalMinutes += session.hours * 60 + session.minutes
+    return acc
+  }, {})
 
-  const sortedDays = Object.keys(sessionsByDay).sort((a, b) =>
-    a > b ? -1 : 1
-  );
+  const sortedDays = Object.keys(sessionsByDay).sort((a, b) => (a > b ? -1 : 1))
 
   async function assignProject(sessionId: string, selectedId: string) {
-    const main = fakeProjects.find((p) => p.id === selectedId);
+    setIsAssigningProject(sessionId)
 
-    let projectName = "";
-    let displayName = "";
+    const main = projects.find((p) => p._id === selectedId)
+
+    let projectName = ""
+    let displayName = ""
     if (main) {
-      projectName = main.name;
-      displayName = main.name;
+      projectName = main.name
+      displayName = main.name
     } else {
-      const parent = fakeProjects.find((p) =>
-        p.subProjects?.some((s) => s.id === selectedId)
-      );
-      const sub = parent?.subProjects?.find((s) => s.id === selectedId);
+      const parent = projects.find((p) =>
+        p.subProjects?.some((s) => s._id === selectedId)
+      )
+      const sub = parent?.subProjects?.find((s) => s._id === selectedId)
       if (parent && sub) {
-        projectName = `${sub.name} — ضمن ${parent.name}`;
-        displayName = `${sub.name} / ${parent.name}`;
+        projectName = `${sub.name} — ضمن ${parent.name}`
+        displayName = `${sub.name} / ${parent.name}`
       } else {
-        return;
+        setIsAssigningProject(null)
+        return
       }
     }
 
     setSessions((prev) =>
       prev.map((sess) =>
-        sess.id === sessionId
-          ? { ...sess, projectId: selectedId, projectName: displayName }
+        sess._id === sessionId
+          ? { ...sess, project: { _id: selectedId, name: displayName } }
           : sess
       )
-    );
+    )
 
     try {
       await fetch(`/api/sessions/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: selectedId, projectName }),
-      });
-    } catch {}
+      })
+    } catch (error) {
+      console.error("Error assigning project:", error)
+    } finally {
+      setIsAssigningProject(null)
+    }
   }
 
   function confirmDelete() {
-    if (!deleteSessionId) return;
-    setSessions((prev) => prev.filter((s) => s.id !== deleteSessionId));
-    setDeleteDialogOpen(false);
-    setDeleteSessionId(null);
+    if (!deleteSessionId) return
+    setSessions((prev) => prev.filter((s) => s._id !== deleteSessionId))
+    setDeleteDialogOpen(false)
+    setDeleteSessionId(null)
   }
 
   // حساب الإنجاز الكلي
   const totalMinutesAllTime = sessions.reduce(
     (sum, s) => sum + s.hours * 60 + s.minutes,
     0
-  );
-  const totalHoursAllTime = Math.floor(totalMinutesAllTime / 60);
-  const totalMinutesRemainder = totalMinutesAllTime % 60;
+  )
+  const totalHoursAllTime = Math.floor(totalMinutesAllTime / 60)
+  const totalMinutesRemainder = totalMinutesAllTime % 60
 
   // توليد النجوم
   function renderStars(totalMinutes: number) {
-    const fraction = Math.min(totalMinutes / (dailyTarget * 60), 1);
-    const totalStars = 3;
-    const filledStars = fraction * totalStars;
+    const fraction = Math.min(totalMinutes / (dailyTarget * 60), 1)
+    const totalStars = 3
+    const filledStars = fraction * totalStars
 
     return Array.from({ length: totalStars }, (_, i) => {
-      const starValue = i + 1;
+      const starValue = i + 1
       if (filledStars >= starValue) {
-        return <Star key={i} className="text-yellow-400 fill-yellow-400" />;
+        return <Star key={i} className="text-yellow-400 fill-yellow-400" />
       } else if (filledStars > i && filledStars < starValue) {
         return (
           <Star
             key={i}
             className="text-yellow-400 fill-yellow-400 opacity-50"
           />
-        );
+        )
       } else {
-        return <Star key={i} className="text-gray-300" />;
+        return <Star key={i} className="text-gray-300" />
       }
-    });
+    })
   }
 
   return (
@@ -219,10 +271,10 @@ export default function SessionsByDay() {
       )}
 
       {sortedDays.map((date) => {
-        const dayData = sessionsByDay[date];
-        const isExpanded = expandedDays.includes(date);
-        const hours = Math.floor(dayData.totalMinutes / 60);
-        const minutes = dayData.totalMinutes % 60;
+        const dayData = sessionsByDay[date]
+        const isExpanded = expandedDays.includes(date)
+        const hours = Math.floor(dayData.totalMinutes / 60)
+        const minutes = dayData.totalMinutes % 60
 
         return (
           <Card key={date} className="cursor-pointer">
@@ -253,35 +305,48 @@ export default function SessionsByDay() {
               {isExpanded && (
                 <div className="space-y-3">
                   {dayData.sessions
-                    .sort((a, b) => (a.id > b.id ? 1 : -1))
+                    .sort((a, b) => (a._id > b._id ? 1 : -1))
                     .map((session) => {
-                      const sessionHours = session.hours;
-                      const sessionMinutes = session.minutes;
+                      const sessionHours = session.hours
+                      const sessionMinutes = session.minutes
                       return (
                         <Card
-                          key={session.id}
+                          key={session._id}
                           className="p-3 bg-gray-50 dark:bg-gray-800 duration-200"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                             <div className="flex justify-between items-center w-full">
                               <Select
-                                value={session.projectId || ""}
+                                value={session.project?._id || ""}
                                 onValueChange={(val) =>
-                                  assignProject(session.id, val)
+                                  assignProject(session._id, val)
                                 }
+                                disabled={isAssigningProject === session._id}
                               >
                                 <SelectTrigger className=" dark:text-white overflow-hidden text-ellipsis">
-                                  <SelectValue placeholder="اختر المشروع" />
+                                  <SelectValue placeholder="اختر المشروع">
+                                    {isAssigningProject === session._id ? (
+                                      <div className="flex items-center gap-2">
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                        تحديث...
+                                      </div>
+                                    ) : (
+                                      session.project?.name || "اختر المشروع"
+                                    )}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {fakeProjects.map((proj) => (
-                                    <div key={proj.id}>
-                                      <SelectItem value={proj.id}>
+                                  {projects.map((proj) => (
+                                    <div key={proj._id}>
+                                      <SelectItem value={proj._id}>
                                         {proj.name}
                                       </SelectItem>
                                       {proj.subProjects?.map((sub) => (
-                                        <SelectItem key={sub.id} value={sub.id}>
+                                        <SelectItem
+                                          key={sub._id}
+                                          value={sub._id}
+                                        >
                                           {sub.name} / {proj.name}
                                         </SelectItem>
                                       ))}
@@ -298,7 +363,7 @@ export default function SessionsByDay() {
                                 <Button
                                   size="sm"
                                   onClick={() => {
-                                    setDetailsSession(session);
+                                    setDetailsSession(session)
                                   }}
                                 >
                                   تفاصيل
@@ -308,8 +373,8 @@ export default function SessionsByDay() {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => {
-                                    setDeleteSessionId(session.id);
-                                    setDeleteDialogOpen(true);
+                                    setDeleteSessionId(session._id)
+                                    setDeleteDialogOpen(true)
                                   }}
                                 >
                                   حذف
@@ -318,13 +383,13 @@ export default function SessionsByDay() {
                             </div>
                           </div>
                         </Card>
-                      );
+                      )
                     })}
                 </div>
               )}
             </CardContent>
           </Card>
-        );
+        )
       })}
 
       {/* دايلوج الحذف */}
@@ -364,5 +429,5 @@ export default function SessionsByDay() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

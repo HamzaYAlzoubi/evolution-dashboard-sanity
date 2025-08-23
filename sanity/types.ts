@@ -91,8 +91,25 @@ export type User = {
   _rev: string;
   name?: string;
   email?: string;
+  emailVerified?: string;
   password?: string;
+  image?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
   dailyTarget?: number;
+  role?: "user" | "admin";
+  isActive?: boolean;
+  lastLogin?: string;
+  createdAt?: string;
 };
 
 export type SanityImagePaletteSwatch = {
