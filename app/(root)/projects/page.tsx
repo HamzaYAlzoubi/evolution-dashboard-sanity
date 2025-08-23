@@ -23,22 +23,7 @@ import {
   Settings,
 } from "lucide-react";
 
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+
 import { Switch } from "@/components/ui/switch";
 
 import { useSession } from "next-auth/react";
@@ -46,40 +31,26 @@ import { useRouter } from "next/navigation";
 import { sanityClient } from "@/sanity/lib/client";
 import { USER_QUERY } from "@/sanity/lib/queries";
 
-/* --- SortableRow --- */
-function SortableRow({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
-    </div>
-  );
-}
+
+type Session = {
+  _id: string;
+  hours: number;
+  minutes: number;
+};
 
 type SubProject = {
   _id: string;
   name: string;
   status: "نشط" | "مكتمل" | "مؤجل";
-  hours: number;
-  minutes: number;
+  sessions: Session[];
 };
 
 type Project = {
   _id: string;
   name: string;
   status: "نشط" | "مكتمل" | "مؤجل";
+  sessions: Session[];
   subProjects: SubProject[];
 };
 
@@ -123,11 +94,7 @@ export default function ProjectsPage() {
     return null;
   }
 
-  // حسّاسات السحب
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -138,13 +105,36 @@ export default function ProjectsPage() {
     });
   };
 
-  const calcTotalTime = (subProjects: SubProject[]) => {
-    let totalMinutes = subProjects.reduce(
-      (acc, sp) => acc + sp.hours * 60 + sp.minutes,
+  const calculateSessionTime = (sessions: Session[]) => {
+    if (!sessions) return { hours: 0, minutes: 0 };
+    const totalMinutes = sessions.reduce(
+      (acc, session) => acc + (session.hours || 0) * 60 + (session.minutes || 0),
       0
     );
-    let hours = Math.floor(totalMinutes / 60);
-    let minutes = totalMinutes % 60;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return { hours, minutes };
+  };
+
+  const calcTotalTime = (project: Project) => {
+    let totalMinutes = 0;
+
+    if (project.sessions) {
+      const projectTime = calculateSessionTime(project.sessions);
+      totalMinutes += projectTime.hours * 60 + projectTime.minutes;
+    }
+
+    if (project.subProjects) {
+      project.subProjects.forEach((sp) => {
+        if (sp.sessions) {
+          const subProjectTime = calculateSessionTime(sp.sessions);
+          totalMinutes += subProjectTime.hours * 60 + subProjectTime.minutes;
+        }
+      });
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
     return { hours, minutes };
   };
 
@@ -177,41 +167,7 @@ export default function ProjectsPage() {
     return parts.join(", ");
   }
 
-  const onDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
-    if (active.id === over.id) return;
-
-    const activeParent = active.id.split("-")[0];
-    const overParent = over.id.split("-")[0];
-
-    setProjects((prev) => {
-      let newProjects = [...prev];
-
-      if (!active.id.includes("-") && !over.id.includes("-")) {
-        const oldIndex = newProjects.findIndex((p) => p._id === active.id);
-        const newIndex = newProjects.findIndex((p) => p._id === over.id);
-        newProjects = arrayMove(newProjects, oldIndex, newIndex);
-      } else if (activeParent === overParent) {
-        newProjects = newProjects.map((proj) => {
-          if (proj._id === activeParent) {
-            const oldIndex = proj.subProjects.findIndex(
-              (sp) => sp._id === active.id
-            );
-            const newIndex = proj.subProjects.findIndex(
-              (sp) => sp._id === over.id
-            );
-            return {
-              ...proj,
-              subProjects: arrayMove(proj.subProjects, oldIndex, newIndex),
-            };
-          }
-          return proj;
-        });
-      }
-      return newProjects;
-    });
-  };
+  
 
   return (
     <div className="p-6 space-y-4 bg-red-0">
@@ -229,138 +185,124 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={onDragEnd}
-      >
-        <SortableContext
-          items={projects.map((p) => p._id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {projects.map((project) => {
-            const totalTime = calcTotalTime(project.subProjects);
-            return (
-              <SortableRow key={project._id} id={project._id}>
-                <Card className="p-4 ">
-                  <div
-                    className="flex items-center justify-between cursor-pointer"
-                    onClick={() => toggleExpand(project._id)}
-                  >
-                    <div className="flex items-center gap-2 mr-[-10px]">
-                      {expanded.includes(project._id) ? (
-                        <ChevronDown />
-                      ) : (
-                        <ChevronRight />
-                      )}
-                      <span className="font-semibold ">{project.name}</span>
-                    </div>
+            {projects.map((project) => {
+        const totalTime = calcTotalTime(project);
+        const subProjectsTime = project.subProjects.map(sp => calculateSessionTime(sp.sessions));
 
-                    <Badge
-                      className="ml-2"
-                      variant={
-                        project.status === "نشط"
-                          ? "default"
-                          : project.status === "مكتمل"
-                            ? "secondary"
-                            : "destructive"
-                      }
+        return (
+          <Card className="p-4 " key={project._id}>
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => toggleExpand(project._id)}
+            >
+              <div className="flex items-center gap-2 mr-[-10px]">
+                {expanded.includes(project._id) ? (
+                  <ChevronDown />
+                ) : (
+                  <ChevronRight />
+                )}
+                <span className="font-semibold ">{project.name}</span>
+              </div>
+
+              <Badge
+                className="ml-2"
+                variant={
+                  project.status === "نشط"
+                    ? "default"
+                    : project.status === "مكتمل"
+                      ? "secondary"
+                      : "destructive"
+                }
+              >
+                {project.status}
+              </Badge>
+
+              <div className="flex items-center bg-green-5 ml-[-15px]">
+                <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
+                  {showDetailedTime
+                    ? formatTimeDetailed(
+                        totalTime.hours,
+                        totalTime.minutes
+                      )
+                    : `${totalTime.hours}h ${totalTime.minutes}m`}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
                     >
-                      {project.status}
-                    </Badge>
+                      <MoreVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent></DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
 
-                    <div className="flex items-center bg-green-5 ml-[-15px]">
-                      <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
-                        {showDetailedTime
-                          ? formatTimeDetailed(
-                              totalTime.hours,
-                              totalTime.minutes
-                            )
-                          : `${totalTime.hours}h ${totalTime.minutes}m`}
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent></DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {expanded.includes(project._id) && (
-                    <SortableContext
-                      items={project.subProjects.map((sp) => sp._id)}
-                      strategy={verticalListSortingStrategy}
+            {expanded.includes(project._id) && (
+              <div className=" pt-4 space-y-2">
+                {project.subProjects.length === 0 && (
+                  <p>لا يوجد مشاريع فرعية.</p>
+                )}
+                {project.subProjects.map((subProject, index) => {
+                  const subProjectTime = subProjectsTime[index];
+                  return (
+                    <Card
+                      key={subProject._id}
+                      className="p-4 pt-2 pb-2 dark:border-gray-700 cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <div className=" pt-4 space-y-2">
-                        {project.subProjects.length === 0 && (
-                          <p>لا يوجد مشاريع فرعية.</p>
-                        )}
-                        {project.subProjects.map((subProject) => (
-                          <SortableRow key={subProject._id} id={subProject._id}>
-                            <Card
-                              className="p-4 pt-2 pb-2 dark:border-gray-700 cursor-pointer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="flex items-center justify-between gap-2 pr-2">
-                                <div className="flex items-center gap-2 mr-[-10px]">
-                                  <span>{subProject.name}</span>
-                                </div>
-                                <Badge
-                                  className="ml-2"
-                                  variant={
-                                    subProject.status === "نشط"
-                                      ? "default"
-                                      : subProject.status === "مكتمل"
-                                        ? "secondary"
-                                        : "outline"
-                                  }
-                                >
-                                  {subProject.status}
-                                </Badge>
+                      <div className="flex items-center justify-between gap-2 pr-2">
+                        <div className="flex items-center gap-2 mr-[-10px]">
+                          <span>{subProject.name}</span>
+                        </div>
+                        <Badge
+                          className="ml-2"
+                          variant={
+                            subProject.status === "نشط"
+                              ? "default"
+                              : subProject.status === "مكتمل"
+                                ? "secondary"
+                                : "outline"
+                          }
+                        >
+                          {subProject.status}
+                        </Badge>
 
-                                <div className="flex items-center bg-green-5 ml-[-15px]">
-                                  <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
-                                    {showDetailedTime
-                                      ? formatTimeDetailed(
-                                          subProject.hours,
-                                          subProject.minutes
-                                        )
-                                      : `${subProject.hours}h ${subProject.minutes}m`}
-                                  </span>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <MoreVertical />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent></DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </div>
-                            </Card>
-                          </SortableRow>
-                        ))}
+                        <div className="flex items-center bg-green-5 ml-[-15px]">
+                          <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
+                            {showDetailedTime
+                              ? formatTimeDetailed(
+                                  subProjectTime.hours,
+                                  subProjectTime.minutes
+                                )
+                              : `${subProjectTime.hours}h ${subProjectTime.minutes}m`}
+                          </span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent></DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                    </SortableContext>
-                  )}
-                </Card>
-              </SortableRow>
-            );
-          })}
-        </SortableContext>
-      </DndContext>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        );
+      })}
 
       <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
         <DialogContent>
