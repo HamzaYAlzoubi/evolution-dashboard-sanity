@@ -44,14 +44,14 @@
       "hours": {
         "type": "objectAttribute",
         "value": {
-          "type": "number"
+          "type": "string"
         },
         "optional": true
       },
       "minutes": {
         "type": "objectAttribute",
         "value": {
-          "type": "number"
+          "type": "string"
         },
         "optional": true
       },

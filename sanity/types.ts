@@ -20,8 +20,8 @@ export type Session = {
   _updatedAt: string;
   _rev: string;
   date?: string;
-  hours?: number;
-  minutes?: number;
+  hours?: string;
+  minutes?: string;
   notes?: string;
   project?: {
     _ref: string;
