@@ -142,7 +142,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       dailyTarget: dailyTarget || 4,
@@ -162,7 +162,8 @@ export async function PATCH(req: NextRequest) {
     const result = await writeClient.patch(id).set(updateData).commit()
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = result
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _removedPassword, ...userWithoutPassword } = result
 
     return NextResponse.json({
       success: true,

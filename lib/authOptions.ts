@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials: any) => {
+      authorize: async (credentials: Record<string, string> | undefined) => {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }: any) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
         token.dailyTarget = user.dailyTarget
@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token
     },
-    async session({ session, token }: any) {
+    async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string
         session.user.dailyTarget = token.dailyTarget as number
@@ -86,11 +86,11 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    async signIn({ user, isNewUser }: any) {
+    async signIn({ user }) {
       // You can add additional logic here if needed
       console.log("User signed in:", user.email)
     },
-    async signOut({ session }: any) {
+    async signOut() {
       // You can add additional logic here if needed
       console.log("User signed out")
     },

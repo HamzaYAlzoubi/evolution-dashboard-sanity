@@ -60,7 +60,7 @@ export default function Register() {
         const data = await res.json()
         setError(data.error || "حدث خطأ ما. يرجى المحاولة مرة أخرى.")
       }
-    } catch (err) {
+    } catch {
       setError("فشل الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.")
     } finally {
       setIsLoading(false)

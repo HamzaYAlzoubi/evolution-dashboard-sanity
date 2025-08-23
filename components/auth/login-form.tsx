@@ -66,7 +66,7 @@ function LoginFormContent({
         // but we can set a state here for immediate feedback if redirect is false
         setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.")
       }
-    } catch (err) {
+    } catch {
       setError("حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.")
     } finally {
       setIsLoading(false)

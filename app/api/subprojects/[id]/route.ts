@@ -90,7 +90,7 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
 
     if (body.name) {
       if (body.name.trim().length === 0) {

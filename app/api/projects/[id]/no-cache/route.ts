@@ -5,8 +5,9 @@ import { authOptions } from "@/lib/authOptions"
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
 
@@ -17,7 +18,7 @@ export async function GET(
       )
     }
 
-    const projectId = params.id
+    const projectId = id
 
     const query = `
       *[_type == 'project' && _id == $projectId]{
