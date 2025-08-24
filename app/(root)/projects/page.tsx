@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,6 +45,14 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Session = {
   _id: string;
@@ -88,6 +97,60 @@ export default function ProjectsPage() {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [showDetailedTime, setShowDetailedTime] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+
+  // Dialog states
+  const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false);
+  const [addSubProjectDialogOpen, setAddSubProjectDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Data for dialogs
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newSubProjectName, setNewSubProjectName] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editStatus, setEditStatus] = useState<"نشط" | "مكتمل" | "مؤجل">("نشط");
+
+  // Target for actions
+  const [currentParentForSub, setCurrentParentForSub] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<{ type: "main"; projectId: string } | { type: "sub"; projectId: string; subId: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "main" | "sub"; projectId: string; subId?: string } | null>(null);
+
+  // Empty handler functions
+  const handleAddProject = () => {
+    // Logic to be implemented later
+    setAddProjectDialogOpen(false);
+  };
+  const handleAddSubProject = () => {
+    // Logic to be implemented later
+    setAddSubProjectDialogOpen(false);
+  };
+  const handleEditProject = () => {
+    // Logic to be implemented later
+    setEditDialogOpen(false);
+  };
+  const handleDeleteProject = () => {
+    // Logic to be implemented later
+    setDeleteTarget(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const openEditDialog = (type: "main" | "sub", projectId: string, subId?: string) => {
+    if (type === "main") {
+      const proj = projects.find((p) => p._id === projectId);
+      if (!proj) return;
+      setEditName(proj.name);
+      setEditStatus(proj.status);
+      setEditTarget({ type, projectId });
+    } else {
+      const proj = projects.find((p) => p._id === projectId);
+      const sub = proj?.subProjects.find((sp) => sp._id === subId);
+      if (!sub) return;
+      setEditName(sub.name);
+      setEditStatus(sub.status);
+      setEditTarget({ type, projectId, subId: subId! });
+    }
+    setEditDialogOpen(true);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -271,8 +334,8 @@ export default function ProjectsPage() {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="p-6 space-y-4 bg-red-0">
-        <div className="flex justify-between items-center gap-4 "></div>
-        <div className="flex justify-end items-center">
+        <div className="flex justify-between items-center">
+          <Button onClick={() => setAddProjectDialogOpen(true)}>إضافة مشروع</Button>
           <Button size="icon" variant="ghost" onClick={() => setSettingsDialogOpen(true)} onPointerDown={(e) => e.stopPropagation()}>
             <Settings />
           </Button>
@@ -302,7 +365,11 @@ export default function ProjectsPage() {
                             <MoreVertical />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent></DropdownMenuContent>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => openEditDialog("main", project._id)}>تعديل</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setCurrentParentForSub(project._id); setAddSubProjectDialogOpen(true); }}>إضافة مشروع فرعي</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => { setDeleteTarget({ type: "main", projectId: project._id }); setDeleteDialogOpen(true); }}>حذف</DropdownMenuItem>
+                        </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
@@ -332,7 +399,10 @@ export default function ProjectsPage() {
                                           <MoreVertical />
                                         </Button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent></DropdownMenuContent>
+                                      <DropdownMenuContent>
+                                        <DropdownMenuItem onClick={() => openEditDialog("sub", project._id, subProject._id)}>تعديل</DropdownMenuItem>
+                                        <DropdownMenuItem className="text-destructive" onClick={() => { setDeleteTarget({ type: "sub", projectId: project._id, subId: subProject._id }); setDeleteDialogOpen(true); }}>حذف</DropdownMenuItem>
+                                      </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
                                 </div>
@@ -361,6 +431,77 @@ export default function ProjectsPage() {
               <Button variant="ghost" onClick={() => setSettingsDialogOpen(false)}>
                 إغلاق
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Project Dialog */}
+        <Dialog open={addProjectDialogOpen} onOpenChange={setAddProjectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>إضافة مشروع جديد</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input type="text" placeholder="اسم المشروع" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setAddProjectDialogOpen(false)}>إلغاء</Button>
+              <Button onClick={handleAddProject}>حفظ</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Sub-Project Dialog */}
+        <Dialog open={addSubProjectDialogOpen} onOpenChange={setAddSubProjectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>إضافة مشروع فرعي</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input type="text" placeholder="اسم المشروع الفرعي" value={newSubProjectName} onChange={(e) => setNewSubProjectName(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setAddSubProjectDialogOpen(false)}>إلغاء</Button>
+              <Button onClick={handleAddSubProject}>حفظ</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>تعديل المشروع</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input type="text" placeholder="الاسم" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              <Select value={editStatus} onValueChange={(value) => setEditStatus(value as "نشط" | "مكتمل" | "مؤجل")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="الحالة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="نشط">نشط</SelectItem>
+                  <SelectItem value="مكتمل">مكتمل</SelectItem>
+                  <SelectItem value="مؤجل">مؤجل</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>إلغاء</Button>
+              <Button onClick={handleEditProject}>حفظ</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>هل أنت متأكد من الحذف؟</DialogTitle>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
+              <Button variant="destructive" onClick={handleDeleteProject}>حذف</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
