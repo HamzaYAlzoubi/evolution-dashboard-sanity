@@ -98,12 +98,48 @@ export default function ProjectsPage() {
     if (status === "authenticated" && session?.user?.id) {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         if (data?.projects) {
-          setProjects(data.projects);
+          const savedProjectsOrder = localStorage.getItem(`projects_order_${session.user.id}`);
+          const savedSubProjectsOrder = localStorage.getItem(`sub_projects_order_${session.user.id}`);
+
+          let projectsToSet = data.projects;
+
+          if (savedProjectsOrder) {
+            const orderedProjects = JSON.parse(savedProjectsOrder).map((id: string) => projectsToSet.find((p: Project) => p._id === id)).filter(Boolean);
+            const remainingProjects = projectsToSet.filter((p: Project) => !JSON.parse(savedProjectsOrder).includes(p._id));
+            projectsToSet = [...orderedProjects, ...remainingProjects];
+          }
+
+          if (savedSubProjectsOrder) {
+            const subProjectsOrder = JSON.parse(savedSubProjectsOrder);
+            projectsToSet = projectsToSet.map((p: Project) => {
+              if (subProjectsOrder[p._id]) {
+                const orderedSubProjects = subProjectsOrder[p._id].map((id: string) => p.subProjects.find((sp: SubProject) => sp._id === id)).filter(Boolean);
+                const remainingSubProjects = p.subProjects.filter((sp: SubProject) => !subProjectsOrder[p._id].includes(sp._id));
+                return { ...p, subProjects: [...orderedSubProjects, ...remainingSubProjects] };
+              }
+              return p;
+            });
+          }
+
+          setProjects(projectsToSet);
+          setUserData(data);
         }
-        setUserData(data);
       });
     }
   }, [status, session?.user?.id]);
+
+  useEffect(() => {
+    if (projects.length > 0 && session?.user?.id) {
+      const projectsOrder = projects.map(p => p._id);
+      const subProjectsOrder = projects.reduce((acc, p) => {
+        acc[p._id] = p.subProjects.map(sp => sp._id);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+      localStorage.setItem(`projects_order_${session.user.id}`, JSON.stringify(projectsOrder));
+      localStorage.setItem(`sub_projects_order_${session.user.id}`, JSON.stringify(subProjectsOrder));
+    }
+  }, [projects, session?.user?.id]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
