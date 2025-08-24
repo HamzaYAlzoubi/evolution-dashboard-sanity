@@ -96,6 +96,11 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
+      const savedExpanded = localStorage.getItem(`expanded_projects_${session.user.id}`);
+      if (savedExpanded) {
+        setExpanded(JSON.parse(savedExpanded));
+      }
+
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         if (data?.projects) {
           const savedProjectsOrder = localStorage.getItem(`projects_order_${session.user.id}`);
@@ -140,6 +145,12 @@ export default function ProjectsPage() {
       localStorage.setItem(`sub_projects_order_${session.user.id}`, JSON.stringify(subProjectsOrder));
     }
   }, [projects, session?.user?.id]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      localStorage.setItem(`expanded_projects_${session.user.id}`, JSON.stringify(expanded));
+    }
+  }, [expanded, session?.user?.id]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
