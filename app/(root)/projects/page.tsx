@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -115,23 +115,92 @@ export default function ProjectsPage() {
   const [editTarget, setEditTarget] = useState<{ type: "main"; projectId: string } | { type: "sub"; projectId: string; subId: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "main" | "sub"; projectId: string; subId?: string } | null>(null);
 
-  // Empty handler functions
-  const handleAddProject = () => {
-    // Logic to be implemented later
+  const fetchProjects = useCallback(async () => {
+    if (status === "authenticated" && session?.user?.id) {
+      const data = await sanityClient.fetch(USER_QUERY, { userId: session.user.id });
+      if (data?.projects) {
+        const savedProjectsOrder = localStorage.getItem(`projects_order_${session.user.id}`);
+        const savedSubProjectsOrder = localStorage.getItem(`sub_projects_order_${session.user.id}`);
+
+        let projectsToSet = data.projects;
+
+        if (savedProjectsOrder) {
+          const orderedProjects = JSON.parse(savedProjectsOrder).map((id: string) => projectsToSet.find((p: Project) => p._id === id)).filter(Boolean);
+          const remainingProjects = projectsToSet.filter((p: Project) => !JSON.parse(savedProjectsOrder).includes(p._id));
+          projectsToSet = [...orderedProjects, ...remainingProjects];
+        }
+
+        if (savedSubProjectsOrder) {
+          const subProjectsOrder = JSON.parse(savedSubProjectsOrder);
+          projectsToSet = projectsToSet.map((p: Project) => {
+            if (subProjectsOrder[p._id]) {
+              const orderedSubProjects = subProjectsOrder[p._id].map((id: string) => p.subProjects.find((sp: SubProject) => sp._id === id)).filter(Boolean);
+              const remainingSubProjects = p.subProjects.filter((sp: SubProject) => !subProjectsOrder[p._id].includes(sp._id));
+              return { ...p, subProjects: [...orderedSubProjects, ...remainingSubProjects] };
+            }
+            return p;
+          });
+        }
+
+        setProjects(projectsToSet);
+        setUserData(data);
+      }
+    }
+  }, [status, session?.user?.id]);
+
+  const handleAddProject = async () => {
+    if (!newProjectName.trim() || !session?.user?.id) return;
+    await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newProjectName, status: "نشط", userId: session.user.id }),
+    });
+    setNewProjectName("");
     setAddProjectDialogOpen(false);
+    fetchProjects();
   };
-  const handleAddSubProject = () => {
-    // Logic to be implemented later
+
+  const handleAddSubProject = async () => {
+    if (!newSubProjectName.trim() || !currentParentForSub) return;
+    await fetch("/api/subprojects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newSubProjectName, status: "نشط", projectId: currentParentForSub }),
+    });
+    setNewSubProjectName("");
     setAddSubProjectDialogOpen(false);
+    fetchProjects();
   };
-  const handleEditProject = () => {
-    // Logic to be implemented later
+
+  const handleEditProject = async () => {
+    if (!editTarget) return;
+    let url;
+    if (editTarget.type === 'main') {
+      url = `/api/projects/${editTarget.projectId}`;
+    } else {
+      url = `/api/subprojects/${editTarget.subId}`;
+    }
+    await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editName, status: editStatus }),
+    });
     setEditDialogOpen(false);
+    fetchProjects();
   };
-  const handleDeleteProject = () => {
-    // Logic to be implemented later
+
+  const handleDeleteProject = async () => {
+    if (!deleteTarget) return;
+    let url;
+    if (deleteTarget.type === 'main') {
+      url = `/api/projects/${deleteTarget.projectId}`;
+    } else {
+      url = `/api/subprojects/${deleteTarget.subId}`;
+    }
+    await fetch(url, { method: "DELETE" });
     setDeleteTarget(null);
     setDeleteDialogOpen(false);
+    fetchProjects();
   };
 
   const openEditDialog = (type: "main" | "sub", projectId: string, subId?: string) => {
@@ -158,43 +227,12 @@ export default function ProjectsPage() {
   );
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.id) {
-      const savedExpanded = localStorage.getItem(`expanded_projects_${session.user.id}`);
-      if (savedExpanded) {
-        setExpanded(JSON.parse(savedExpanded));
-      }
-
-      sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
-        if (data?.projects) {
-          const savedProjectsOrder = localStorage.getItem(`projects_order_${session.user.id}`);
-          const savedSubProjectsOrder = localStorage.getItem(`sub_projects_order_${session.user.id}`);
-
-          let projectsToSet = data.projects;
-
-          if (savedProjectsOrder) {
-            const orderedProjects = JSON.parse(savedProjectsOrder).map((id: string) => projectsToSet.find((p: Project) => p._id === id)).filter(Boolean);
-            const remainingProjects = projectsToSet.filter((p: Project) => !JSON.parse(savedProjectsOrder).includes(p._id));
-            projectsToSet = [...orderedProjects, ...remainingProjects];
-          }
-
-          if (savedSubProjectsOrder) {
-            const subProjectsOrder = JSON.parse(savedSubProjectsOrder);
-            projectsToSet = projectsToSet.map((p: Project) => {
-              if (subProjectsOrder[p._id]) {
-                const orderedSubProjects = subProjectsOrder[p._id].map((id: string) => p.subProjects.find((sp: SubProject) => sp._id === id)).filter(Boolean);
-                const remainingSubProjects = p.subProjects.filter((sp: SubProject) => !subProjectsOrder[p._id].includes(sp._id));
-                return { ...p, subProjects: [...orderedSubProjects, ...remainingSubProjects] };
-              }
-              return p;
-            });
-          }
-
-          setProjects(projectsToSet);
-          setUserData(data);
-        }
-      });
+    const savedExpanded = localStorage.getItem(`expanded_projects_${session?.user?.id}`);
+    if (savedExpanded) {
+      setExpanded(JSON.parse(savedExpanded));
     }
-  }, [status, session?.user?.id]);
+    fetchProjects();
+  }, [fetchProjects, session?.user?.id]);
 
   useEffect(() => {
     if (projects.length > 0 && session?.user?.id) {

@@ -8,10 +8,15 @@ export async function POST(req: Request) {
       _type: "subProject",
       name: body.name,
       status: body.status,
-      hours: body.hours,
-      minutes: body.minutes,
       project: { _type: "reference", _ref: body.projectId },
     });
+
+    await writeClient
+      .patch(body.projectId)
+      .setIfMissing({ subProjects: [] })
+      .append('subProjects', [{ _type: 'reference', _ref: result._id }])
+      .commit();
+
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
     return NextResponse.json({ success: false, error: "Failed to create sub-project" }, { status: 500 });
