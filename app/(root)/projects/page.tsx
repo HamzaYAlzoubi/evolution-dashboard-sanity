@@ -53,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FaSpinner } from "react-icons/fa";
 
 type Session = {
   _id: string;
@@ -97,6 +98,7 @@ export default function ProjectsPage() {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [showDetailedTime, setShowDetailedTime] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Dialog states
   const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false);
@@ -150,6 +152,7 @@ export default function ProjectsPage() {
 
   const handleAddProject = async () => {
     if (!newProjectName.trim() || !session?.user?.id) return;
+    setIsLoading(true);
     await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -157,11 +160,13 @@ export default function ProjectsPage() {
     });
     setNewProjectName("");
     setAddProjectDialogOpen(false);
-    fetchProjects();
+    await fetchProjects();
+    setIsLoading(false);
   };
 
   const handleAddSubProject = async () => {
     if (!newSubProjectName.trim() || !currentParentForSub) return;
+    setIsLoading(true);
     await fetch("/api/subprojects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -169,11 +174,13 @@ export default function ProjectsPage() {
     });
     setNewSubProjectName("");
     setAddSubProjectDialogOpen(false);
-    fetchProjects();
+    await fetchProjects();
+    setIsLoading(false);
   };
 
   const handleEditProject = async () => {
     if (!editTarget) return;
+    setIsLoading(true);
     let url;
     if (editTarget.type === 'main') {
       url = `/api/projects/${editTarget.projectId}`;
@@ -186,21 +193,26 @@ export default function ProjectsPage() {
       body: JSON.stringify({ name: editName, status: editStatus }),
     });
     setEditDialogOpen(false);
-    fetchProjects();
+    await fetchProjects();
+    setIsLoading(false);
   };
 
   const handleDeleteProject = async () => {
     if (!deleteTarget) return;
+    setIsLoading(true);
     let url;
     if (deleteTarget.type === 'main') {
       url = `/api/projects/${deleteTarget.projectId}`;
     } else {
       url = `/api/subprojects/${deleteTarget.subId}`;
     }
-    await fetch(url, { method: "DELETE" });
-    setDeleteTarget(null);
-    setDeleteDialogOpen(false);
-    fetchProjects();
+    const res = await fetch(url, { method: "DELETE" });
+    if (res.ok) {
+      setDeleteTarget(null);
+      setDeleteDialogOpen(false);
+      await fetchProjects();
+    }
+    setIsLoading(false);
   };
 
   const openEditDialog = (type: "main" | "sub", projectId: string, subId?: string) => {
@@ -483,8 +495,10 @@ export default function ProjectsPage() {
               <Input type="text" placeholder="اسم المشروع" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} />
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setAddProjectDialogOpen(false)}>إلغاء</Button>
-              <Button onClick={handleAddProject}>حفظ</Button>
+              <Button variant="ghost" onClick={() => setAddProjectDialogOpen(false)} disabled={isLoading}>إلغاء</Button>
+              <Button onClick={handleAddProject} disabled={isLoading}>
+                {isLoading ? <FaSpinner className="animate-spin" /> : "حفظ"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -499,8 +513,10 @@ export default function ProjectsPage() {
               <Input type="text" placeholder="اسم المشروع الفرعي" value={newSubProjectName} onChange={(e) => setNewSubProjectName(e.target.value)} />
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setAddSubProjectDialogOpen(false)}>إلغاء</Button>
-              <Button onClick={handleAddSubProject}>حفظ</Button>
+              <Button variant="ghost" onClick={() => setAddSubProjectDialogOpen(false)} disabled={isLoading}>إلغاء</Button>
+              <Button onClick={handleAddSubProject} disabled={isLoading}>
+                {isLoading ? <FaSpinner className="animate-spin" /> : "حفظ"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -525,8 +541,10 @@ export default function ProjectsPage() {
               </Select>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>إلغاء</Button>
-              <Button onClick={handleEditProject}>حفظ</Button>
+              <Button variant="ghost" onClick={() => setEditDialogOpen(false)} disabled={isLoading}>إلغاء</Button>
+              <Button onClick={handleEditProject} disabled={isLoading}>
+                {isLoading ? <FaSpinner className="animate-spin" /> : "حفظ"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -538,8 +556,10 @@ export default function ProjectsPage() {
               <DialogTitle>هل أنت متأكد من الحذف؟</DialogTitle>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
-              <Button variant="destructive" onClick={handleDeleteProject}>حذف</Button>
+              <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)} disabled={isLoading}>إلغاء</Button>
+              <Button variant="destructive" onClick={handleDeleteProject} disabled={isLoading}>
+                {isLoading ? <FaSpinner className="animate-spin" /> : "حذف"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
