@@ -96,25 +96,14 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
-      const savedProjects = localStorage.getItem(`projects_${session.user.id}`);
-      if (savedProjects) {
-        setProjects(JSON.parse(savedProjects));
-      } else {
-        sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
-          if (data?.projects) {
-            setProjects(data.projects);
-          }
-          setUserData(data);
-        });
-      }
+      sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
+        if (data?.projects) {
+          setProjects(data.projects);
+        }
+        setUserData(data);
+      });
     }
   }, [status, session?.user?.id]);
-
-  useEffect(() => {
-    if (projects.length > 0 && session?.user?.id) {
-      localStorage.setItem(`projects_${session.user.id}`, JSON.stringify(projects));
-    }
-  }, [projects, session?.user?.id]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
