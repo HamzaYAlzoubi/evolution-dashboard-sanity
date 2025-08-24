@@ -18,7 +18,6 @@ export async function PATCH(req: Request) {
   }
 }
 
-
 export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const id = url.pathname.split("/").pop();
@@ -26,8 +25,12 @@ export async function DELETE(req: Request) {
     // First, fetch the project to get its sub-projects
     const project = await writeClient.fetch(`*[_id == $id][0]{ 'subProjects': subProjects[]->_id }`, { id });
 
-    // If the project has sub-projects, delete them
+    // If the project has sub-projects, first remove the references, then delete them
     if (project && project.subProjects && project.subProjects.length > 0) {
+      // Remove the references from the main project
+      await writeClient.patch(id!).unset(['subProjects']).commit();
+      
+      // Then delete the sub-projects
       await Promise.all(project.subProjects.map((subId: string) => writeClient.delete(subId)));
     }
 
