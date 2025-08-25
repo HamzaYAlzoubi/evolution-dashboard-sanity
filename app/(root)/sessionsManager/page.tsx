@@ -239,7 +239,7 @@ export default function SessionsByDay() {
               {/* رأس اليوم */}
               <div className="flex justify-between items-center">
                 <div className="font-semibold">
-                  {date} - إجمالي الوقت: {hours}س {minutes}د
+                  {date} - إلإنجاز اليوم: <span className="text-green-600 font-bold">{hours}h {minutes}m</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex">
@@ -265,30 +265,7 @@ export default function SessionsByDay() {
                         >
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                             <div className="flex justify-between items-center w-full">
-                              <Select
-                                value={session.projectId || ""}
-                                onValueChange={(val) =>
-                                  assignProject(session.id, val)
-                                }
-                              >
-                                <SelectTrigger className=" dark:text-white overflow-hidden text-ellipsis">
-                                  <SelectValue placeholder="اختر المشروع" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {fakeProjects.map((proj) => (
-                                    <div key={proj.id}>
-                                      <SelectItem value={proj.id}>
-                                        {proj.name}
-                                      </SelectItem>
-                                      {proj.subProjects?.map((sub) => (
-                                        <SelectItem key={sub.id} value={sub.id}>
-                                          {sub.name} / {proj.name}
-                                        </SelectItem>
-                                      ))}
-                                    </div>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+
 
                               <div className="whitespace-nowrap font-extrabold text-gray-700 dark:text-white">
                                 {sessionHours}h {sessionMinutes}m
@@ -350,17 +327,27 @@ export default function SessionsByDay() {
         onOpenChange={() => setDetailsSession(null)}
       >
         <DialogContent>
+
           <DialogHeader>
-            <DialogTitle>ملاحظات الجلسة</DialogTitle>
+            <DialogTitle>تفاصيل الجلسة</DialogTitle>
           </DialogHeader>
+            <DialogTitle>المشروع الذي تم العمل عليه ﺃثناء الجلسة:</DialogTitle>
+          <div className="text-gray-700 dark:text-white text-lg whitespace-pre-wrap min-h-[60px]">
+            {detailsSession?.projectName || <span className="text-red-600"> المشروع تم حذفه.</span>}
+          </div>
+
+            <DialogTitle>ملاحظات الجلسة:</DialogTitle>
           <div className="text-gray-700 dark:text-white text-lg whitespace-pre-wrap min-h-[60px]">
             {detailsSession?.notes || "لا توجد ملاحظات"}
           </div>
+
+
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setDetailsSession(null)}>
+            <Button onClick={() => setDetailsSession(null)}>
               إغلاق
             </Button>
           </DialogFooter>
+          
         </DialogContent>
       </Dialog>
     </div>
