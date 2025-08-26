@@ -32,6 +32,7 @@ export default function SessionsByDay() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
@@ -69,17 +70,30 @@ export default function SessionsByDay() {
   );
 
   async function assignProject(sessionId: string, selectedId: string) {
-    // This function needs to be updated to work with real data
     console.log("Assigning project", sessionId, selectedId);
   }
 
-  function confirmDelete() {
+  const confirmDelete = async () => {
     if (!deleteSessionId) return;
-    // This needs to be updated to call the API
-    setSessions((prev) => prev.filter((s) => s._id !== deleteSessionId));
-    setDeleteDialogOpen(false);
-    setDeleteSessionId(null);
-  }
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/sessions/${deleteSessionId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setSessions((prev) => prev.filter((s) => s._id !== deleteSessionId));
+        setDeleteDialogOpen(false);
+        setDeleteSessionId(null);
+      } else {
+        console.error("Failed to delete session");
+      }
+    } catch (error) {
+      console.error("Error deleting session:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const totalMinutesAllTime = sessions.reduce(
     (sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0),
@@ -242,11 +256,11 @@ export default function SessionsByDay() {
             <DialogTitle>هل أنت متأكد من حذف الجلسة؟</DialogTitle>
           </DialogHeader>
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>
+            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting}>
               إلغاء
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              حذف
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? <FaSpinner className="animate-spin" /> : "حذف"}
             </Button>
           </DialogFooter>
         </DialogContent>
