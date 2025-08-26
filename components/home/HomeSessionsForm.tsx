@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircleIcon, CheckCircle2Icon, Star, LogOut } from "lucide-react";
+import { AlertCircleIcon, CheckCircle2Icon, Star } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -25,8 +25,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import { sanityClient } from "@/sanity/lib/client";
 import { USER_QUERY } from "@/sanity/lib/queries";
@@ -35,7 +34,6 @@ import LinkStudio from "@/app/link";
 
 export default function HomeSessionsForm() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [formData, setFormData] = useState({
     project: "",
     date: "",
@@ -45,6 +43,7 @@ export default function HomeSessionsForm() {
   });
 
   const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true); // Added isLoading state
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -57,27 +56,12 @@ export default function HomeSessionsForm() {
     if (status === "authenticated" && session?.user?.id) {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         setUserData(data);
+        setIsLoading(false); // Set isLoading to false after data is fetched
       });
+    } else if (status === "unauthenticated") { // Handle unauthenticated case
+        setIsLoading(false); // Set isLoading to false if not authenticated
     }
   }, [status, session?.user?.id]);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login");
-    }
-  }, [status, router]);
-
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-      </div>
-    );
-  }
-
-  if (status === "unauthenticated") {
-    return null;
-  }
 
   const [Alertsuccess, setsuccess] = useState(false);
   const [AlertError, setAlertError] = useState(false);
@@ -193,27 +177,17 @@ export default function HomeSessionsForm() {
     setIsUpdatingTarget(false);
   };
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/login" });
-  };
+  if (isLoading) { // Added full-page spinner check
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <FaSpinner className="animate-spin h-8 w-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex relative flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
-      {/* Header with user info and sign out */}
       <div className="absolute top-4 right-4 flex items-center gap-4">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          مرحباً، {session?.user?.name || session?.user.email}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSignOut}
-          className="flex items-center gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          تسجيل الخروج
-        </Button>
-
         <LinkStudio />
       </div>
 
