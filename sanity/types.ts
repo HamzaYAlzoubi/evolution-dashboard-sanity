@@ -94,6 +94,13 @@ export type User = {
     _key: string;
     [internalGroqTypeReferenceTo]?: "project";
   }>;
+  sessions?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "session";
+  }>;
 };
 
 export type SanityImagePaletteSwatch = {

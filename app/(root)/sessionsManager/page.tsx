@@ -1,6 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { sanityClient } from "@/sanity/lib/client";
+import { USER_QUERY } from "@/sanity/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,81 +15,44 @@ import {
 } from "@/components/ui/dialog";
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-type Project = {
-  id: string;
-  name: string;
-  subProjects?: { id: string; name: string }[];
-};
+import { FaSpinner } from "react-icons/fa";
 
 type Session = {
-  id: string;
+  _id: string;
   projectId?: string;
   projectName?: string;
   date: string;
-  hours: number;
-  minutes: number;
+  hours: string;
+  minutes: string;
   notes: string;
 };
 
-const fakeProjects: Project[] = [
-  {
-    id: "proj-1",
-    name: "مشروع ألف",
-    subProjects: [{ id: "sub-1", name: "فرعي 1" }],
-  },
-  {
-    id: "proj-2",
-    name: "مشروع باء",
-    subProjects: [{ id: "sub-2", name: "فرjjjjjjعي 2" }],
-  },
-  { id: "proj-3", name: "مشروع جيم" },
-];
-
-const fakeSessions: Session[] = [
-  {
-    id: "sess-1",
-    projectId: "proj-1",
-    projectName: "مشروع ألف",
-    date: "2025-08-10",
-    hours: 1,
-    minutes: 30,
-    notes: "مراجعة أولية",
-  },
-  {
-    id: "sess-2",
-    projectId: "proj-1",
-    projectName: "مشروع ألف",
-    date: "2025-08-10",
-    hours: 0,
-    minutes: 45,
-    notes: "تصميم الواجهة",
-  },
-  {
-    id: "sess-3",
-    date: "2025-08-11",
-    hours: 5,
-    minutes: 0,
-    notes: "جلسة بدون مشروع",
-  },
-  {
-    id: "sess-4",
-    projectId: "proj-2",
-    projectName: "مشروع باء",
-    date: "2025-08-11",
-    hours: 1,
-    minutes: 15,
-    notes: "برمجة المكونات",
-  },
-];
-
 export default function SessionsByDay() {
-  const [sessions, setSessions] = useState<Session[]>(fakeSessions);
+  const { data: session, status } = useSession();
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [detailsSession, setDetailsSession] = useState<Session | null>(null);
-  const [dailyTarget, setDailyTarget] = useState(4); // القيمة الافتراضية
+  const [dailyTarget, setDailyTarget] = useState(4);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.id) {
+      sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
+        if (data) {
+          setSessions(data.sessions || []);
+          setDailyTarget(data.dailyTarget || 4);
+          setUserData(data);
+        }
+        setIsLoading(false);
+      });
+    } else if (status === "unauthenticated") {
+      setIsLoading(false);
+    }
+  }, [status, session]);
 
   const sessionsByDay = sessions.reduce<
     Record<string, { sessions: Session[]; totalMinutes: number }>
@@ -94,7 +60,7 @@ export default function SessionsByDay() {
     if (!acc[session.date])
       acc[session.date] = { sessions: [], totalMinutes: 0 };
     acc[session.date].sessions.push(session);
-    acc[session.date].totalMinutes += session.hours * 60 + session.minutes;
+    acc[session.date].totalMinutes += (Number(session.hours) || 0) * 60 + (Number(session.minutes) || 0);
     return acc;
   }, {});
 
@@ -103,61 +69,29 @@ export default function SessionsByDay() {
   );
 
   async function assignProject(sessionId: string, selectedId: string) {
-    const main = fakeProjects.find((p) => p.id === selectedId);
-
-    let projectName = "";
-    let displayName = "";
-    if (main) {
-      projectName = main.name;
-      displayName = main.name;
-    } else {
-      const parent = fakeProjects.find((p) =>
-        p.subProjects?.some((s) => s.id === selectedId)
-      );
-      const sub = parent?.subProjects?.find((s) => s.id === selectedId);
-      if (parent && sub) {
-        projectName = `${sub.name} — ضمن ${parent.name}`;
-        displayName = `${sub.name} / ${parent.name}`;
-      } else {
-        return;
-      }
-    }
-
-    setSessions((prev) =>
-      prev.map((sess) =>
-        sess.id === sessionId
-          ? { ...sess, projectId: selectedId, projectName: displayName }
-          : sess
-      )
-    );
-
-    try {
-      await fetch(`/api/sessions/${sessionId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: selectedId, projectName }),
-      });
-    } catch {}
+    // This function needs to be updated to work with real data
+    console.log("Assigning project", sessionId, selectedId);
   }
 
   function confirmDelete() {
     if (!deleteSessionId) return;
-    setSessions((prev) => prev.filter((s) => s.id !== deleteSessionId));
+    // This needs to be updated to call the API
+    setSessions((prev) => prev.filter((s) => s._id !== deleteSessionId));
     setDeleteDialogOpen(false);
     setDeleteSessionId(null);
   }
 
-  // حساب الإنجاز الكلي
   const totalMinutesAllTime = sessions.reduce(
-    (sum, s) => sum + s.hours * 60 + s.minutes,
+    (sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0),
     0
   );
   const totalHoursAllTime = Math.floor(totalMinutesAllTime / 60);
   const totalMinutesRemainder = totalMinutesAllTime % 60;
 
-  // توليد النجوم
   function renderStars(totalMinutes: number) {
-    const fraction = Math.min(totalMinutes / (dailyTarget * 60), 1);
+    const targetMinutes = (Number(dailyTarget) || 4) * 60;
+    if (targetMinutes === 0) return null;
+    const fraction = Math.min(totalMinutes / targetMinutes, 1);
     const totalStars = 3;
     const filledStars = fraction * totalStars;
 
@@ -178,9 +112,16 @@ export default function SessionsByDay() {
     });
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <FaSpinner className="animate-spin h-8 w-8" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* الإنجاز الكلي */}
       <Card className="shadow-lg rounded-2xl p-8 flex  flex-col items-center justify-between  ">
         <div className="flex flex-col items-center gap-2">
           <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
@@ -229,7 +170,6 @@ export default function SessionsByDay() {
                 )
               }
             >
-              {/* رأس اليوم */}
               <div className="flex justify-between items-center">
                 <div className="font-semibold">
                   {date} - إلإنجاز اليوم: <span className="text-green-600 font-bold">{hours}h {minutes}m</span>
@@ -242,17 +182,16 @@ export default function SessionsByDay() {
                 </div>
               </div>
 
-              {/* الجلسات */}
               {isExpanded && (
                 <div className="space-y-3">
                   {dayData.sessions
-                    .sort((a, b) => (a.id > b.id ? 1 : -1))
+                    .sort((a, b) => (a._id > b._id ? 1 : -1))
                     .map((session) => {
-                      const sessionHours = session.hours;
-                      const sessionMinutes = session.minutes;
+                      const sessionHours = Number(session.hours) || 0;
+                      const sessionMinutes = Number(session.minutes) || 0;
                       return (
                         <Card
-                          key={session.id}
+                          key={session._id}
                           className="p-3 bg-gray-50 dark:bg-gray-800 duration-200"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -278,7 +217,7 @@ export default function SessionsByDay() {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => {
-                                    setDeleteSessionId(session.id);
+                                    setDeleteSessionId(session._id);
                                     setDeleteDialogOpen(true);
                                   }}
                                 >
@@ -297,7 +236,6 @@ export default function SessionsByDay() {
         );
       })}
 
-      {/* دايلوج الحذف */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -314,7 +252,6 @@ export default function SessionsByDay() {
         </DialogContent>
       </Dialog>
 
-      {/* دايلوج التفاصيل */}
       <Dialog
         open={!!detailsSession}
         onOpenChange={() => setDetailsSession(null)}

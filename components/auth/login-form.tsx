@@ -144,9 +144,6 @@ function LoginFormContent({
                   "تسجيل الدخول"
                 )}
               </Button>
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                تسجيل الدخول باستخدام Google
-              </Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm">

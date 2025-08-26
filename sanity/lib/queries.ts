@@ -17,6 +17,14 @@ export const USER_QUERY = defineQuery(`
         status,
         sessions[]->{_id, date, hours, minutes, notes}
       }
+    },
+    sessions[]->{
+      _id,
+      date,
+      hours,
+      minutes,
+      notes,
+      "projectName": project->name
     }
   }
 `);
