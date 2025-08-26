@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     await writeClient
       .patch(body.projectId)
       .setIfMissing({ sessions: [] })
-      .append("sessions", [{ _type: "reference", _ref: newSession._id }])
+      .append("sessions", [{ _type: "reference", _ref: newSession._id, _key: crypto.randomUUID() }])
       .commit();
 
     return NextResponse.json({ success: true, data: newSession });

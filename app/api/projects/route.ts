@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     await writeClient
       .patch(body.userId)
       .setIfMissing({ projects: [] })
-      .append('projects', [{ _type: 'reference', _ref: result._id }])
+      .append('projects', [{ _type: 'reference', _ref: result._id, _key: crypto.randomUUID() }])
       .commit();
     console.log("User patched successfully.");
 

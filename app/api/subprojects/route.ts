@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     await writeClient
       .patch(body.projectId)
       .setIfMissing({ subProjects: [] })
-      .append('subProjects', [{ _type: 'reference', _ref: result._id }])
+      .append('subProjects', [{ _type: 'reference', _ref: result._id, _key: crypto.randomUUID() }])
       .commit();
 
     return NextResponse.json({ success: true, data: result });
