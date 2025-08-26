@@ -32,5 +32,11 @@ export default {
       type: "array",
       of: [{ type: "reference", to: [{ type: "project" }] }],
     },
+    {
+      name: "sessions",
+      title: "Sessions",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "session" }] }],
+    },
   ],
 }
