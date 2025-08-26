@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircleIcon, CheckCircle2Icon, Star, LogOut } from "lucide-react";
+import { FaSpinner } from "react-icons/fa";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -178,6 +179,31 @@ export default function HomeSessionsForm() {
         setAlertError(false);
       }, 3000);
     }
+  };
+
+  const [isUpdatingTarget, setIsUpdatingTarget] = useState(false);
+
+  const handleUpdateDailyTarget = async () => {
+    if (!session?.user?.id) return;
+    setIsUpdatingTarget(true);
+    try {
+      const res = await fetch(`/api/users/${session.user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dailyTarget: targetInput }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDailyTarget(targetInput);
+        setTargetDialogOpen(false);
+      } else {
+        // Optionally, handle error with an alert
+        console.error("Failed to update daily target");
+      }
+    } catch (error) {
+      console.error("Error updating daily target:", error);
+    }
+    setIsUpdatingTarget(false);
   };
 
   const handleSignOut = () => {
@@ -358,16 +384,11 @@ export default function HomeSessionsForm() {
             />
           </div>
           <DialogFooter className="flex gap-2">
-            <Button variant="ghost" onClick={() => setTargetDialogOpen(false)}>
+            <Button variant="ghost" onClick={() => setTargetDialogOpen(false)} disabled={isUpdatingTarget}>
               إلغاء
             </Button>
-            <Button
-              onClick={() => {
-                setDailyTarget(targetInput);
-                setTargetDialogOpen(false);
-              }}
-            >
-              حفظ
+            <Button onClick={handleUpdateDailyTarget} disabled={isUpdatingTarget}>
+              {isUpdatingTarget ? <FaSpinner className="animate-spin" /> : "حفظ"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -52,7 +52,6 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json()
     const { name, email, password, dailyTarget } = body
 
-    // Extract ID from URL
     const id = req.nextUrl.pathname.split("/").pop()
 
     if (!id) {
@@ -62,44 +61,33 @@ export async function PATCH(req: NextRequest) {
       )
     }
 
-    // Validate required fields
-    if (!name || !email) {
-      return NextResponse.json(
-        { success: false, error: "الاسم والبريد الإلكتروني مطلوبان" },
-        { status: 400 }
+    const updateData: any = {}
+
+    if (name) {
+      updateData.name = name.trim()
+    }
+
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        return NextResponse.json(
+          { success: false, error: "البريد الإلكتروني غير صحيح" },
+          { status: 400 }
+        )
+      }
+      const existingUser = await writeClient.fetch(
+        `*[_type == 'user' && email == $email && _id != $id][0]`,
+        { email: email.toLowerCase().trim(), id }
       )
+      if (existingUser) {
+        return NextResponse.json(
+          { success: false, error: "هذا البريد الإلكتروني مسجل بالفعل" },
+          { status: 409 }
+        )
+      }
+      updateData.email = email.toLowerCase().trim()
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: "البريد الإلكتروني غير صحيح" },
-        { status: 400 }
-      )
-    }
-
-    // Check if email is already taken by another user
-    const existingUser = await writeClient.fetch(
-      `*[_type == 'user' && email == $email && _id != $id][0]`,
-      { email: email.toLowerCase().trim(), id }
-    )
-
-    if (existingUser) {
-      return NextResponse.json(
-        { success: false, error: "هذا البريد الإلكتروني مسجل بالفعل" },
-        { status: 409 }
-      )
-    }
-
-    // Prepare update data
-    const updateData: any = {
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      dailyTarget: dailyTarget || 4,
-    }
-
-    // Hash password if provided
     if (password) {
       if (password.length < 6) {
         return NextResponse.json(
@@ -110,9 +98,25 @@ export async function PATCH(req: NextRequest) {
       updateData.password = await hash(password, 12)
     }
 
+    if (dailyTarget !== undefined) {
+        if (typeof dailyTarget !== 'number' || dailyTarget < 0) {
+            return NextResponse.json(
+                { success: false, error: "قيمة الهدف اليومي غير صالحة" },
+                { status: 400 }
+            );
+        }
+        updateData.dailyTarget = dailyTarget;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+        return NextResponse.json(
+            { success: false, error: "لا توجد بيانات للتحديث" },
+            { status: 400 }
+        );
+    }
+
     const result = await writeClient.patch(id).set(updateData).commit()
 
-    // Remove password from response
     const { password: _, ...userWithoutPassword } = result
 
     return NextResponse.json({
