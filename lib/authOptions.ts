@@ -43,7 +43,6 @@ export const authOptions: NextAuthOptions = {
             dailyTarget: user.dailyTarget || 4,
           }
         } catch (error) {
-          console.error("Auth error:", error)
           return null
         }
       },
