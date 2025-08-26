@@ -345,17 +345,44 @@ export default function ProjectsPage() {
   function formatTimeDetailed(hours: number, minutes: number) {
     const totalMinutes = hours * 60 + minutes;
     if (totalMinutes === 0) return "0m";
-    let parts = [];
-    const weeks = Math.floor(totalMinutes / (7 * 24 * 60));
-    let remainingMinutes = totalMinutes % (7 * 24 * 60);
-    const days = Math.floor(remainingMinutes / (24 * 60));
-    remainingMinutes %= 24 * 60;
-    const hrs = Math.floor(remainingMinutes / 60);
-    const mins = remainingMinutes % 60;
-    if (weeks > 0) parts.push(`${weeks}w`);
-    if (days > 0) parts.push(`${days}d`);
-    if (hrs > 0) parts.push(`${hrs}h`);
-    if (mins > 0) parts.push(`${mins}m`);
+
+    const minutesInHour = 60;
+    const minutesInDay = 24 * minutesInHour;
+    const minutesInMonth = 30 * minutesInDay; // Approximation
+    const minutesInYear = 365 * minutesInDay;
+
+    let remainingMinutes = totalMinutes;
+    const parts = [];
+
+    const years = Math.floor(remainingMinutes / minutesInYear);
+    if (years > 0) {
+      parts.push(`${years}y`);
+      remainingMinutes %= minutesInYear;
+    }
+
+    const months = Math.floor(remainingMinutes / minutesInMonth);
+    if (months > 0) {
+      parts.push(`${months}mo`);
+      remainingMinutes %= minutesInMonth;
+    }
+
+    const days = Math.floor(remainingMinutes / minutesInDay);
+    if (days > 0) {
+      parts.push(`${days}d`);
+      remainingMinutes %= minutesInDay;
+    }
+
+    const hrs = Math.floor(remainingMinutes / minutesInHour);
+    if (hrs > 0) {
+      parts.push(`${hrs}h`);
+      remainingMinutes %= minutesInHour;
+    }
+
+    const mins = Math.floor(remainingMinutes);
+    if (mins > 0) {
+      parts.push(`${mins}m`);
+    }
+
     return parts.join(", ");
   }
 

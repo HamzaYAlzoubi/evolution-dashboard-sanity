@@ -187,9 +187,6 @@ export default function HomeSessionsForm() {
 
   return (
     <div className="flex relative flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
-      <div className="absolute top-4 right-4 flex items-center gap-4">
-        <LinkStudio />
-      </div>
 
       <h1 className="text-2xl font-bold mb-6 dark:text-white">
         إضافة جلسة عمل
