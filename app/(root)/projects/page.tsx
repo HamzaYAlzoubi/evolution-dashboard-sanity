@@ -396,7 +396,7 @@ export default function ProjectsPage() {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="p-6 space-y-4 bg-red-0">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mt-5 mb-5">
           <Button onClick={() => setAddProjectDialogOpen(true)}>إضافة مشروع</Button>
           <Button size="icon" variant="ghost" onClick={() => setSettingsDialogOpen(true)} onPointerDown={(e) => e.stopPropagation()}>
             <Settings />

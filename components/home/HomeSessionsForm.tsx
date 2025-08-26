@@ -186,7 +186,7 @@ export default function HomeSessionsForm() {
   }
 
   return (
-    <div className="flex relative flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
+    <div className="flex relative pt-5 flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
 
       <h1 className="text-2xl font-bold mb-6 dark:text-white">
         إضافة جلسة عمل
