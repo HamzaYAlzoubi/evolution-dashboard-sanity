@@ -10,13 +10,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
