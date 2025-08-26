@@ -1,4 +1,3 @@
-import type { NextConfig } from "next";
 import withPWAInit from "next-pwa";
 
 // نفعّل مكتبة next-pwa
@@ -8,7 +7,7 @@ const withPWA = withPWAInit({
   skipWaiting: true,
 });
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   reactStrictMode: true,
   // أي إعدادات إضافية لمشروعك
 };
