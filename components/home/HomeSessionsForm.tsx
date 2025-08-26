@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,12 +37,12 @@ export default function HomeSessionsForm() {
   const [formData, setFormData] = useState({
     project: "",
     date: "",
-    hours: "", // Changed from 0 to ""
-    minutes: "", // Changed from 0 to ""
+    hours: "",
+    minutes: "",
     notes: "",
   });
 
-  const [userData, setUserData] = useState<any>(null); // State to store fetched user data
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -53,23 +51,20 @@ export default function HomeSessionsForm() {
     }));
   }, []);
 
-  // Fetch user data when session is available
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         setUserData(data);
       });
     }
-  }, [status, session?.user?.id]); // Depend on status and user ID
+  }, [status, session?.user?.id]);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login");
     }
   }, [status, router]);
 
-  // Show loading while checking authentication
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -78,11 +73,9 @@ export default function HomeSessionsForm() {
     );
   }
 
-  // Don't render if not authenticated
   if (status === "unauthenticated") {
     return null;
   }
-  
 
   const [Alertsuccess, setsuccess] = useState(false);
   const [AlertError, setAlertError] = useState(false);
@@ -90,6 +83,8 @@ export default function HomeSessionsForm() {
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   const [dailyTarget, setDailyTarget] = useState(4);
   const [targetInput, setTargetInput] = useState(dailyTarget);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdatingTarget, setIsUpdatingTarget] = useState(false);
 
   useEffect(() => {
     if (userData?.dailyTarget) {
@@ -104,7 +99,7 @@ export default function HomeSessionsForm() {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: value, // Now always store as string
+      [name]: value,
     }));
   };
 
@@ -122,9 +117,7 @@ export default function HomeSessionsForm() {
     if (!formData.project) {
       setErrorMessage("الرجاء اختيار مشروع أولاً.");
       setAlertError(true);
-      setTimeout(() => {
-        setAlertError(false);
-      }, 3000);
+      setTimeout(() => setAlertError(false), 3000);
       return;
     }
 
@@ -134,12 +127,11 @@ export default function HomeSessionsForm() {
     ) {
       setErrorMessage("انت لم تضع ساعات ودقائق للجلسة.");
       setAlertError(true);
-      setTimeout(() => {
-        setAlertError(false);
-      }, 3000);
+      setTimeout(() => setAlertError(false), 3000);
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch("/api/sessions", {
         method: "POST",
@@ -155,33 +147,27 @@ export default function HomeSessionsForm() {
 
       if (data.success) {
         setsuccess(true);
-        setTimeout(() => {
-          setsuccess(false);
-        }, 3000);
+        setTimeout(() => setsuccess(false), 3000);
         setFormData({
           project: "",
           date: new Date().toISOString().split("T")[0],
-          hours: "", // Changed from 0 to ""
-          minutes: "", // Changed from 0 to ""
+          hours: "",
+          minutes: "",
           notes: "",
         });
       } else {
         setErrorMessage("فشل في تسجيل الجلسة.");
         setAlertError(true);
-        setTimeout(() => {
-          setAlertError(false);
-        }, 3000);
+        setTimeout(() => setAlertError(false), 3000);
       }
     } catch (error) {
       setErrorMessage("فشل في تسجيل الجلسة.");
       setAlertError(true);
-      setTimeout(() => {
-        setAlertError(false);
-      }, 3000);
+      setTimeout(() => setAlertError(false), 3000);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const [isUpdatingTarget, setIsUpdatingTarget] = useState(false);
 
   const handleUpdateDailyTarget = async () => {
     if (!session?.user?.id) return;
@@ -197,7 +183,6 @@ export default function HomeSessionsForm() {
         setDailyTarget(targetInput);
         setTargetDialogOpen(false);
       } else {
-        // Optionally, handle error with an alert
         console.error("Failed to update daily target");
       }
     } catch (error) {
@@ -338,8 +323,9 @@ export default function HomeSessionsForm() {
               type="submit"
               variant="outline"
               className="w-full dark:bg-[#6866F1] bg-[#0f172b] text-white"
+              disabled={isSubmitting}
             >
-              إضافة الجلسة
+              {isSubmitting ? <FaSpinner className="animate-spin mx-auto" /> : "إضافة الجلسة"}
             </Button>
           </form>
         </CardContent>
