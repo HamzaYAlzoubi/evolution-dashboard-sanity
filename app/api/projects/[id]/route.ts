@@ -21,29 +21,56 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const id = url.pathname.split("/").pop();
+
+  if (!id) {
+    return NextResponse.json({ success: false, error: "Project ID is missing" }, { status: 400 });
+  }
+
   try {
-    // First, fetch the project to get its sub-projects
-    const project = await writeClient.fetch(`*[_id == $id][0]{ 'subProjects': subProjects[]->_id }`, { id });
+    // 1. Find all related documents in one go
+    const relatedDocs = await writeClient.fetch(
+      `{
+        "subProjectIds": *[_type == "subProject" && project._ref == $id]._id,
+        "sessionIds": *[_type == "session" && (project._ref == $id || project._ref in *[_type == "subProject" && project._ref == $id]._id)]._id,
+        "userId": *[_type == "user" && references($id)][0]._id
+      }`,
+      { id }
+    );
 
-    // If the project has sub-projects, first remove the references, then delete them
-    if (project && project.subProjects && project.subProjects.length > 0) {
-      // Remove the references from the main project
-      await writeClient.patch(id!).unset(['subProjects']).commit();
-      
-      // Then delete the sub-projects
-      await Promise.all(project.subProjects.map((subId: string) => writeClient.delete(subId)));
+    const { subProjectIds = [], sessionIds = [], userId } = relatedDocs;
+
+    // 2. Build a transaction to perform all operations atomically
+    let tx = writeClient.transaction();
+
+    // 2a. Unset project reference from all related sessions
+    if (sessionIds.length > 0) {
+      sessionIds.forEach((sessionId: string) => {
+        tx = tx.patch(sessionId, { unset: ["project"] });
+      });
     }
 
-    // Then, remove the project reference from the user
-    const user = await writeClient.fetch(`*[_type == 'user' && references($id)][0]{_id}`, { id });
-    if (user) {
-      await writeClient.patch(user._id).unset([`projects[_ref=="${id}"]`]).commit();
+    // 2b. Delete all sub-projects
+    if (subProjectIds.length > 0) {
+      subProjectIds.forEach((subId: string) => {
+        tx = tx.delete(subId);
+      });
+    }
+    
+    // 2c. Remove the project reference from the user
+    if (userId) {
+      tx = tx.patch(userId, { unset: [`projects[_ref=="${id}"]`] });
     }
 
-    // Finally, delete the project itself
-    await writeClient.delete(id!);
-    return NextResponse.json({ success: true, message: "Project deleted" });
+    // 2d. Delete the main project itself
+    tx = tx.delete(id);
+
+    // 3. Commit the transaction
+    await tx.commit();
+
+    return NextResponse.json({ success: true, message: "Project and its sub-projects deleted successfully. Sessions unlinked." });
+
   } catch (err) {
+    console.error("Failed to delete project:", err);
     return NextResponse.json({ success: false, error: "Failed to delete project" }, { status: 500 });
   }
 }
