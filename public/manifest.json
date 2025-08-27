@@ -1,6 +1,6 @@
 {
-  "name": "سلطة الاستفزاز",
-  "short_name": "NextApp",
+  "name": "السبيل",
+  "short_name": "السبيل",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -15,6 +15,12 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
