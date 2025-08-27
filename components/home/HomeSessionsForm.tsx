@@ -309,7 +309,7 @@ export default function HomeSessionsForm() {
           <span>الهدف اليومي</span>
         </CardTitle>
         <CardContent className="flex flex-col items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center mr-[-10px]">
             <Button
               variant="ghost"
               size="icon"
