@@ -102,6 +102,35 @@ export default function SessionsByDay() {
   const totalHoursAllTime = Math.floor(totalMinutesAllTime / 60);
   const totalMinutesRemainder = totalMinutesAllTime % 60;
 
+  // Monthly Achievement
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const totalMinutesMonth = sessions
+    .filter(s => {
+      const sessionDate = new Date(s.date);
+      return sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear;
+    })
+    .reduce((sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0);
+  const totalHoursMonth = Math.floor(totalMinutesMonth / 60);
+  const totalMinutesMonthRemainder = totalMinutesMonth % 60;
+
+  // Weekly Achievement (Last 7 days)
+  const today = new Date();
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(today.getDate() - 6); // Today + 6 previous days = 7 days
+  sevenDaysAgo.setHours(0, 0, 0, 0); // Start of the 7th day ago
+
+  const totalMinutesWeek = sessions
+    .filter(s => {
+      const sessionDate = new Date(s.date);
+      return sessionDate >= sevenDaysAgo;
+    })
+    .reduce((sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0);
+  const totalHoursWeek = Math.floor(totalMinutesWeek / 60);
+  const totalMinutesWeekRemainder = totalMinutesWeek % 60;
+
+
   function renderStars(totalMinutes: number) {
     const targetMinutes = dailyTarget;
     if (targetMinutes === 0) return null;
@@ -141,7 +170,7 @@ export default function SessionsByDay() {
           <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
             الإنجاز منذ البداية
           </span>
-          <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">{`${totalHoursAllTime}h ${totalMinutesRemainder}m`}</Badge>
+          <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">{`${totalHoursAllTime.toLocaleString()}h ${totalMinutesRemainder}m`}</Badge>
         </div>
 
         <div className="flex flex-row-reverse justify-between items-center gap-6">
@@ -149,13 +178,13 @@ export default function SessionsByDay() {
             <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
               إنجاز الشهر
             </span>
-            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">{`${totalHoursAllTime}h ${totalMinutesRemainder}m`}</Badge>
+            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">{`${totalHoursMonth.toLocaleString()}h ${totalMinutesMonthRemainder}m`}</Badge>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-base font-semibold  text-gray-700 dark:text-gray-200">
               إنجاز الأسبوع
             </span>
-            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] rounded-xl shadow">{`${totalHoursAllTime}h ${totalMinutesRemainder}m`}</Badge>
+            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] rounded-xl shadow">{`${totalHoursWeek.toLocaleString()}h ${totalMinutesWeekRemainder}m`}</Badge>
           </div>
         </div>
       </Card>
@@ -213,6 +242,9 @@ export default function SessionsByDay() {
                             <div className="flex justify-between items-center w-full">
 
 
+                              <div className="whitespace-nowrap font-extrabold text-[#101828] dark:text-white">
+                                {session.projectName!}
+                              </div>
                               <div className="whitespace-nowrap font-extrabold text-gray-700 dark:text-white">
                                 {sessionHours}h {sessionMinutes}m
                               </div>

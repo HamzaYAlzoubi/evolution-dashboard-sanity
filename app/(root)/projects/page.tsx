@@ -403,8 +403,8 @@ export default function ProjectsPage() {
   const formatSimpleTime = (hours: number, minutes: number) => {
     if (hours === 0 && minutes === 0) return "0m";
     if (hours === 0) return `${minutes}m`;
-    if (minutes === 0) return `${hours}h`;
-    return `${hours}h ${minutes}m`;
+    if (minutes === 0) return `${hours.toLocaleString()}h`;
+    return `${hours.toLocaleString()}h ${minutes}m`;
   };
 
   return (
@@ -467,7 +467,7 @@ export default function ProjectsPage() {
                                   </Badge>
                                   <div className="flex items-center bg-green-5 ml-[-15px]">
                                     <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
-                                      {showDetailedTime ? formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes) : `${subProjectTime.hours}h ${subProjectTime.minutes}m`}
+                                      {showDetailedTime ? formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes) : `${subProjectTime.hours.toLocaleString()}h ${subProjectTime.minutes}m`}
                                     </span>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
