@@ -348,8 +348,9 @@ export default function ProjectsPage() {
 
     const minutesInHour = 60;
     const minutesInDay = 24 * minutesInHour;
-    const minutesInMonth = 30 * minutesInDay; // Approximation
-    const minutesInYear = 365 * minutesInDay;
+    const minutesInWeek = 7 * minutesInDay;
+    const minutesInMonth = 30 * minutesInDay;
+    const minutesInYear = 12 * minutesInMonth;
 
     let remainingMinutes = totalMinutes;
     const parts = [];
@@ -364,6 +365,12 @@ export default function ProjectsPage() {
     if (months > 0) {
       parts.push(`${months}mo`);
       remainingMinutes %= minutesInMonth;
+    }
+
+    const weeks = Math.floor(remainingMinutes / minutesInWeek);
+    if (weeks > 0) {
+      parts.push(`${weeks}w`);
+      remainingMinutes %= minutesInWeek;
     }
 
     const days = Math.floor(remainingMinutes / minutesInDay);
@@ -383,7 +390,7 @@ export default function ProjectsPage() {
       parts.push(`${mins}m`);
     }
 
-    return parts.join(", ");
+    return parts.join(" ");
   }
 
   const formatSimpleTime = (hours: number, minutes: number) => {

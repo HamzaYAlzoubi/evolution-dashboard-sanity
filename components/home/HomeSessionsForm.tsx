@@ -247,8 +247,8 @@ export default function HomeSessionsForm() {
                     if (isProjectActive || activeSubProjects.length > 0) {
                       return (
                         <SelectGroup key={p._id}>
-                          <SelectLabel className="text-red-600" dir="auto">{p.name}</SelectLabel>
-                          {isProjectActive && <SelectItem className="font-bold" value={p._id} dir="auto">{p.name}</SelectItem>}
+                          <SelectLabel className="text-red-600 font-bold" dir="rtl">{p.name}</SelectLabel>
+                          {isProjectActive && <SelectItem className="font-bold" value={p._id} dir="rtl">{p.name}</SelectItem>}
                           {activeSubProjects.map((sp: any) => (
                             <SelectItem key={sp._id} value={sp._id} dir="rtl">
                               <div className="flex items-center justify-between w-full">
