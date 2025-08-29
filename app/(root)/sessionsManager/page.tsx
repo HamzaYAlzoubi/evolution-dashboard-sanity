@@ -13,9 +13,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronUp, Star } from "lucide-react";
+import { ChevronDown, ChevronUp, Star, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FaSpinner } from "react-icons/fa";
+import { Switch } from "@/components/ui/switch";
 
 type Session = {
   _id: string;
@@ -39,6 +40,16 @@ export default function SessionsByDay() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [detailsSession, setDetailsSession] = useState<Session | null>(null);
   const [dailyTarget, setDailyTarget] = useState(240);
+
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [showDetailedTime, setShowDetailedTime] = useState(false);
+
+  useEffect(() => {
+    const savedShowDetailedTime = localStorage.getItem("showDetailedTime");
+    if (savedShowDetailedTime) {
+      setShowDetailedTime(JSON.parse(savedShowDetailedTime));
+    }
+  }, []);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
@@ -130,6 +141,56 @@ export default function SessionsByDay() {
   const totalHoursWeek = Math.floor(totalMinutesWeek / 60);
   const totalMinutesWeekRemainder = totalMinutesWeek % 60;
 
+  function formatTimeDetailed(hours: number, minutes: number) {
+    const totalMinutes = hours * 60 + minutes;
+    if (totalMinutes === 0) return "0m";
+
+    const minutesInHour = 60;
+    const minutesInDay = 24 * minutesInHour;
+    const minutesInWeek = 7 * minutesInDay;
+    const minutesInMonth = 30 * minutesInDay;
+    const minutesInYear = 12 * minutesInMonth;
+
+    let remainingMinutes = totalMinutes;
+    const parts = [];
+
+    const years = Math.floor(remainingMinutes / minutesInYear);
+    if (years > 0) {
+      parts.push(`${years}y,`);
+      remainingMinutes %= minutesInYear;
+    }
+
+    const months = Math.floor(remainingMinutes / minutesInMonth);
+    if (months > 0) {
+      parts.push(`${months}mo,`);
+      remainingMinutes %= minutesInMonth;
+    }
+
+    const weeks = Math.floor(remainingMinutes / minutesInWeek);
+    if (weeks > 0) {
+      parts.push(`${weeks}w,`);
+      remainingMinutes %= minutesInWeek;
+    }
+
+    const days = Math.floor(remainingMinutes / minutesInDay);
+    if (days > 0) {
+      parts.push(`${days}d,`);
+      remainingMinutes %= minutesInDay;
+    }
+
+    const hrs = Math.floor(remainingMinutes / minutesInHour);
+    if (hrs > 0) {
+      parts.push(`${hrs}h,`);
+      remainingMinutes %= minutesInHour;
+    }
+
+    const mins = Math.floor(remainingMinutes);
+    if (mins > 0) {
+      parts.push(`${mins}min`);
+    }
+
+    return parts.join(" ");
+  }
 
   function renderStars(totalMinutes: number) {
     const targetMinutes = dailyTarget;
@@ -170,7 +231,9 @@ export default function SessionsByDay() {
           <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
             الإنجاز منذ البداية
           </span>
-          <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">{`${totalHoursAllTime.toLocaleString()}h ${totalMinutesRemainder}m`}</Badge>
+          <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">
+            {showDetailedTime ? formatTimeDetailed(totalHoursAllTime, totalMinutesRemainder) : `${totalHoursAllTime.toLocaleString()}h ${totalMinutesRemainder}m`}
+          </Badge>
         </div>
 
         <div className="flex flex-row-reverse justify-between items-center gap-6">
@@ -178,18 +241,27 @@ export default function SessionsByDay() {
             <span className="text-base font-semibold text-gray-700 dark:text-gray-200">
               إنجاز الشهر
             </span>
-            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">{`${totalHoursMonth.toLocaleString()}h ${totalMinutesMonthRemainder}m`}</Badge>
+            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] dark:text-white rounded-xl shadow">
+              {showDetailedTime ? formatTimeDetailed(totalHoursMonth, totalMinutesMonthRemainder) : `${totalHoursMonth.toLocaleString()}h ${totalMinutesMonthRemainder}m`}
+            </Badge>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-base font-semibold  text-gray-700 dark:text-gray-200">
               إنجاز الأسبوع
             </span>
-            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] rounded-xl shadow">{`${totalHoursWeek.toLocaleString()}h ${totalMinutesWeekRemainder}m`}</Badge>
+            <Badge className="text-lg px-4 py-2 dark:bg-[#6866F1] bg-[#101828] rounded-xl shadow">
+              {showDetailedTime ? formatTimeDetailed(totalHoursWeek, totalMinutesWeekRemainder) : `${totalHoursWeek.toLocaleString()}h ${totalMinutesWeekRemainder}m`}
+            </Badge>
           </div>
         </div>
       </Card>
 
-      <h1 className="text-2xl font-semibold mb-6">إدارة الجلسات حسب اليوم</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">إدارة الجلسات حسب اليوم</h1>
+        <Button size="icon" variant="ghost" onClick={() => setSettingsDialogOpen(true)}>
+            <Settings />
+        </Button>
+      </div>
 
       {sortedDays.length === 0 && (
         <p className="text-center text-gray-500">لا توجد جلسات لعرضها.</p>
@@ -326,6 +398,30 @@ export default function SessionsByDay() {
           
         </DialogContent>
       </Dialog>
+
+      <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>إعدادات عرض الوقت</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-between py-4">
+            <span>عرض الوقت بتنسيق ذكي</span>
+            <Switch
+              checked={showDetailedTime}
+              onCheckedChange={(value) => {
+                setShowDetailedTime(value);
+                localStorage.setItem("showDetailedTime", JSON.stringify(value));
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSettingsDialogOpen(false)}>
+              إغلاق
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

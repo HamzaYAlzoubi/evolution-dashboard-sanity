@@ -364,37 +364,37 @@ export default function ProjectsPage() {
 
     const years = Math.floor(remainingMinutes / minutesInYear);
     if (years > 0) {
-      parts.push(`${years}y`);
+      parts.push(`${years}y,`);
       remainingMinutes %= minutesInYear;
     }
 
     const months = Math.floor(remainingMinutes / minutesInMonth);
     if (months > 0) {
-      parts.push(`${months}mo`);
+      parts.push(`${months}mo,`);
       remainingMinutes %= minutesInMonth;
     }
 
     const weeks = Math.floor(remainingMinutes / minutesInWeek);
     if (weeks > 0) {
-      parts.push(`${weeks}w`);
+      parts.push(`${weeks}w,`);
       remainingMinutes %= minutesInWeek;
     }
 
     const days = Math.floor(remainingMinutes / minutesInDay);
     if (days > 0) {
-      parts.push(`${days}d`);
+      parts.push(`${days}d,`);
       remainingMinutes %= minutesInDay;
     }
 
     const hrs = Math.floor(remainingMinutes / minutesInHour);
     if (hrs > 0) {
-      parts.push(`${hrs}h`);
+      parts.push(`${hrs}h,`);
       remainingMinutes %= minutesInHour;
     }
 
     const mins = Math.floor(remainingMinutes);
     if (mins > 0) {
-      parts.push(`${mins}m`);
+      parts.push(`${mins}min`);
     }
 
     return parts.join(" ");
