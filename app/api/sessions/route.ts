@@ -14,20 +14,27 @@ export async function POST(req: Request) {
       project: { _type: "reference", _ref: body.projectId },
     });
 
-    // Fetch the user associated with the project
-    const project = await writeClient.fetch(`*[_id == $projectId][0]{ user->{_id} }`, { projectId: body.projectId });
-    const userId = project?.user?._id;
+    // Determine if the project is a main project or a sub-project
+    const projectDoc = await writeClient.fetch(`*[_id == $projectId][0]{ _type, "user": user->{_id} }`, { projectId: body.projectId });
 
-    // Start a transaction to update both the project and the user
+    let userId;
+    if (projectDoc._type === 'project') {
+      userId = projectDoc.user?._id;
+    } else if (projectDoc._type === 'subProject') {
+      const parentProject = await writeClient.fetch(`*[_type == 'project' && references($subProjectId)][0]{ user->{_id} }`, { subProjectId: body.projectId });
+      userId = parentProject?.user?._id;
+    }
+
+    // Start a transaction to update both the project/sub-project and the user
     let tx = writeClient.transaction();
 
-    // 1. Append the session to the project's sessions array
+    // 1. Append the session to the project's/sub-project's sessions array
     tx = tx.patch(body.projectId, (p) =>
       p.setIfMissing({ sessions: [] })
        .append("sessions", [{ _type: "reference", _ref: newSession._id, _key: crypto.randomUUID() }])
     );
 
-    // 2. If a user is linked to the project, append the session to the user's sessions array
+    // 2. If a user is found, append the session to the user's sessions array
     if (userId) {
       tx = tx.patch(userId, (p) =>
         p.setIfMissing({ sessions: [] })
