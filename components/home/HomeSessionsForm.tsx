@@ -31,6 +31,7 @@ import { sanityClient } from "@/sanity/lib/client";
 import { USER_QUERY } from "@/sanity/lib/queries";
 
 import LinkStudio from "@/app/link";
+import { HiChevronLeft } from "react-icons/hi2";
 
 export default function HomeSessionsForm() {
   const { data: session, status } = useSession();
@@ -238,19 +239,29 @@ export default function HomeSessionsForm() {
                 >
                   <SelectValue placeholder="اختر المشروع" />
                 </SelectTrigger>
-                <SelectContent>
-                  {userData?.projects?.map((p: any) => (
-                    <SelectGroup key={p._id}>
-                      <SelectLabel className="text-red-600">{p.name}</SelectLabel>
-                      <SelectItem value={p._id}>{p.name}</SelectItem>
-                      {p.subProjects &&
-                        p.subProjects.map((sp: any) => (
-                          <SelectItem key={sp._id} value={sp._id}>
-                            - {sp.name}
-                          </SelectItem>
-                        ))}
-                    </SelectGroup>
-                  ))}
+                <SelectContent dir="rtl">
+                  {userData?.projects?.map((p: any) => {
+                    const activeSubProjects = p.subProjects?.filter((sp: any) => sp.status === 'نشط') || [];
+                    const isProjectActive = p.status === 'نشط';
+
+                    if (isProjectActive || activeSubProjects.length > 0) {
+                      return (
+                        <SelectGroup key={p._id}>
+                          <SelectLabel className="text-red-600" dir="auto">{p.name}</SelectLabel>
+                          {isProjectActive && <SelectItem className="font-bold" value={p._id} dir="auto">{p.name}</SelectItem>}
+                          {activeSubProjects.map((sp: any) => (
+                            <SelectItem key={sp._id} value={sp._id} dir="rtl">
+                              <div className="flex items-center justify-between w-full">
+                                {formData.project !== sp._id && <HiChevronLeft/>}
+                                <span>{sp.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
+                    }
+                    return null;
+                  })}
                 </SelectContent>
               </Select>
             </div>

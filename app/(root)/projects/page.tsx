@@ -448,7 +448,7 @@ export default function ProjectsPage() {
                                   <div className="flex items-center gap-2 mr-[-10px]">
                                     <span>{subProject.name}</span>
                                   </div>
-                                  <Badge className="ml-2" variant={subProject.status === "نشط" ? "default" : subProject.status === "مكتمل" ? "secondary" : "outline"}>
+                                  <Badge className="ml-2" variant={subProject.status === "نشط" ? "default" : subProject.status === "مكتمل" ? "secondary" : "destructive"}>
                                     {subProject.status}
                                   </Badge>
                                   <div className="flex items-center bg-green-5 ml-[-15px]">
