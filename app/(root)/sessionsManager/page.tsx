@@ -314,10 +314,10 @@ export default function SessionsByDay() {
                             <div className="flex justify-between items-center w-full">
 
 
-                              <div className="whitespace-nowrap font-extrabold text-[#101828] dark:text-white">
+                              <div className="font-extrabold ml-3 text-[#101828] dark:text-white">
                                 {session.projectName!}
                               </div>
-                              <div className="whitespace-nowrap font-extrabold text-gray-700 dark:text-white">
+                              <div className="whitespace-nowrap font-extrabold ml-3 text-gray-700 dark:text-white">
                                 {sessionHours}h {sessionMinutes}m
                               </div>
 
