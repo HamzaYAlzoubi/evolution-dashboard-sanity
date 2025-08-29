@@ -265,6 +265,13 @@ export default function ProjectsPage() {
     }
   }, [expanded, session?.user?.id]);
 
+  useEffect(() => {
+    const savedShowDetailedTime = localStorage.getItem("showDetailedTime");
+    if (savedShowDetailedTime) {
+      setShowDetailedTime(JSON.parse(savedShowDetailedTime));
+    }
+  }, []);
+
   
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -494,7 +501,13 @@ export default function ProjectsPage() {
             </DialogHeader>
             <div className="flex items-center justify-between py-4">
               <span>عرض الوقت بتنسيق ذكي</span>
-              <Switch checked={showDetailedTime} onCheckedChange={() => setShowDetailedTime((prev) => !prev)} />
+              <Switch
+                checked={showDetailedTime}
+                onCheckedChange={(value) => {
+                  setShowDetailedTime(value);
+                  localStorage.setItem("showDetailedTime", JSON.stringify(value));
+                }}
+              />
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setSettingsDialogOpen(false)}>
