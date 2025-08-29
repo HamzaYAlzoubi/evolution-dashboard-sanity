@@ -432,7 +432,7 @@ export default function ProjectsPage() {
                       {project.status}
                     </Badge>
                     <div className="flex items-center bg-green-5 ml-[-15px]">
-                      <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
+                      <span className="text-gray-500 whitespace-nowrap dark:text-white">
                         {showDetailedTime ? formatTimeDetailed(totalTime.hours, totalTime.minutes) : formatSimpleTime(totalTime.hours, totalTime.minutes)}
                       </span>
                       <DropdownMenu>
@@ -466,7 +466,7 @@ export default function ProjectsPage() {
                                     {subProject.status}
                                   </Badge>
                                   <div className="flex items-center bg-green-5 ml-[-15px]">
-                                    <span className="text-lg text-gray-500 whitespace-nowrap dark:text-white">
+                                    <span className="text-gray-500 whitespace-nowrap dark:text-white">
                                       {showDetailedTime ? formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes) : `${subProjectTime.hours.toLocaleString()}h ${subProjectTime.minutes}m`}
                                     </span>
                                     <DropdownMenu>
