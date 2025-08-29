@@ -38,14 +38,14 @@ export default function SessionsByDay() {
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [detailsSession, setDetailsSession] = useState<Session | null>(null);
-  const [dailyTarget, setDailyTarget] = useState(4);
+  const [dailyTarget, setDailyTarget] = useState(240);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         if (data) {
           setSessions(data.sessions || []);
-          setDailyTarget(data.dailyTarget || 4);
+          setDailyTarget(data.dailyTarget || 240);
           setUserData(data);
         }
         setIsLoading(false);
@@ -103,7 +103,7 @@ export default function SessionsByDay() {
   const totalMinutesRemainder = totalMinutesAllTime % 60;
 
   function renderStars(totalMinutes: number) {
-    const targetMinutes = (Number(dailyTarget) || 4) * 60;
+    const targetMinutes = dailyTarget;
     if (targetMinutes === 0) return null;
     const fraction = Math.min(totalMinutes / targetMinutes, 1);
     const totalStars = 3;

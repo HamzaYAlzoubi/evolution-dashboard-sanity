@@ -22,9 +22,10 @@ export default {
     },
     {
       name: "dailyTarget",
-      title: "Daily Target (hours)",
+      title: "Daily Target (minutes)",
       type: "number",
-      initialValue: 4,
+      description: "The daily target in minutes",
+      initialValue: 240,
     },
     {
       name: "projects",

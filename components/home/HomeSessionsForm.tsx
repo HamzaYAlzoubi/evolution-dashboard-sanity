@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircleIcon, CheckCircle2Icon, Star } from "lucide-react";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaStar } from "react-icons/fa";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -43,7 +43,8 @@ export default function HomeSessionsForm() {
   });
 
   const [userData, setUserData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true); // Added isLoading state
+  const [isLoading, setIsLoading] = useState(true);
+  const [isTargetAchieved, setIsTargetAchieved] = useState(false);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -56,10 +57,18 @@ export default function HomeSessionsForm() {
     if (status === "authenticated" && session?.user?.id) {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         setUserData(data);
-        setIsLoading(false); // Set isLoading to false after data is fetched
+        if (data?.sessions) {
+          const today = new Date().toISOString().split("T")[0];
+          const todaySessions = data.sessions.filter((s: any) => s.date === today);
+          const totalMinutesToday = todaySessions.reduce((acc: number, s: any) => acc + (Number(s.hours) * 60) + Number(s.minutes), 0);
+          if (totalMinutesToday >= data.dailyTarget) {
+            setIsTargetAchieved(true);
+          }
+        }
+        setIsLoading(false);
       });
-    } else if (status === "unauthenticated") { // Handle unauthenticated case
-        setIsLoading(false); // Set isLoading to false if not authenticated
+    } else if (status === "unauthenticated") {
+      setIsLoading(false);
     }
   }, [status, session?.user?.id]);
 
@@ -67,15 +76,18 @@ export default function HomeSessionsForm() {
   const [AlertError, setAlertError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
-  const [dailyTarget, setDailyTarget] = useState(4);
-  const [targetInput, setTargetInput] = useState(dailyTarget);
+  const [dailyTarget, setDailyTarget] = useState(240);
+  const [targetInputHours, setTargetInputHours] = useState(4);
+  const [targetInputMinutes, setTargetInputMinutes] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUpdatingTarget, setIsUpdatingTarget] = useState(false);
 
   useEffect(() => {
     if (userData?.dailyTarget) {
-      setDailyTarget(userData.dailyTarget);
-      setTargetInput(userData.dailyTarget);
+      const targetInMinutes = userData.dailyTarget;
+      setDailyTarget(targetInMinutes);
+      setTargetInputHours(Math.floor(targetInMinutes / 60));
+      setTargetInputMinutes(targetInMinutes % 60);
     }
   }, [userData]);
 
@@ -158,15 +170,16 @@ export default function HomeSessionsForm() {
   const handleUpdateDailyTarget = async () => {
     if (!session?.user?.id) return;
     setIsUpdatingTarget(true);
+    const totalMinutes = (Number(targetInputHours) * 60) + Number(targetInputMinutes);
     try {
       const res = await fetch(`/api/users/${session.user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dailyTarget: targetInput }),
+        body: JSON.stringify({ dailyTarget: totalMinutes }),
       });
       const data = await res.json();
       if (data.success) {
-        setDailyTarget(targetInput);
+        setDailyTarget(totalMinutes);
         setTargetDialogOpen(false);
       } else {
         console.error("Failed to update daily target");
@@ -177,13 +190,16 @@ export default function HomeSessionsForm() {
     setIsUpdatingTarget(false);
   };
 
-  if (isLoading) { // Added full-page spinner check
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <FaSpinner className="animate-spin h-8 w-8" />
       </div>
     );
   }
+
+  const dailyTargetHours = Math.floor(dailyTarget / 60);
+  const dailyTargetMinutes = dailyTarget % 60;
 
   return (
     <div className="flex relative pt-5 flex-col items-center justify-center min-h-screen bg-white dark:bg-[#0F172B]">
@@ -209,7 +225,6 @@ export default function HomeSessionsForm() {
       <Card className="shadow-none border-none dark:bg-[#0F172B]">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 ">
-            {/* المشروع - الآن سيلكت من شادسن */}
             <div className="space-y-2">
               <Label htmlFor="project">المشروع</Label>
 
@@ -240,7 +255,6 @@ export default function HomeSessionsForm() {
               </Select>
             </div>
 
-            {/* مدة الجلسة */}
             <div className="space-y-2">
               <Label>مدة الجلسة</Label>
               <div className="flex gap-2">
@@ -265,7 +279,6 @@ export default function HomeSessionsForm() {
               </div>
             </div>
 
-            {/* حقل تاريخ الجلسة */}
             <div className="space-y-2">
               <Label htmlFor="date">تاريخ الجلسة</Label>
               <Input
@@ -278,7 +291,6 @@ export default function HomeSessionsForm() {
               />
             </div>
 
-            {/* ملاحظات */}
             <div className="space-y-2">
               <Label htmlFor="notes">ملاحظات</Label>
               <Textarea
@@ -291,7 +303,6 @@ export default function HomeSessionsForm() {
               />
             </div>
 
-            {/* زر الإضافة */}
             <Button
               type="submit"
               variant="outline"
@@ -315,32 +326,49 @@ export default function HomeSessionsForm() {
               size="icon"
               onClick={() => setTargetDialogOpen(true)}
             >
-              <Star className="text-yellow-500" />
+              {isTargetAchieved ? <FaStar className="text-yellow-500" /> : <Star className="text-yellow-500" />}
             </Button>
-            <span className="text-lg font-semibold">{dailyTarget} نجوم</span>
+            <span className="text-lg font-semibold">
+              {dailyTargetHours > 0 && `${dailyTargetHours}h`}
+              {dailyTargetHours > 0 && dailyTargetMinutes > 0 && " "}
+              {dailyTargetMinutes > 0 && `${dailyTargetMinutes}m`}
+            </span>
           </div>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            أكمل {dailyTarget} ساعات من العمل اليوم لتحقيق الهدف.
+            أكمل هدفك اليومي لتحقيق الإنجاز.
           </p>
         </CardContent>
       </Card>
 
-      {/* دايلوج تحديد الهدف اليومي */}
       <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>تحديد الهدف اليومي</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Label htmlFor="target">عدد الساعات المطلوبة يوميًا</Label>
-            <Input
-              id="target"
-              type="number"
-              min={1}
-              value={targetInput}
-              onChange={(e) => setTargetInput(Number(e.target.value))}
-              className="mt-2"
-            />
+            <Label>الوقت المطلوب يوميًا</Label>
+            <div className="flex gap-2">
+              <Input
+                id="targetHours"
+                type="number"
+                min={0}
+                max={18}
+                placeholder="ساعات"
+                value={targetInputHours}
+                onChange={(e) => setTargetInputHours(Number(e.target.value))}
+                className="mt-2 w-1/2"
+              />
+              <Input
+                id="targetMinutes"
+                type="number"
+                min={0}
+                max={59}
+                placeholder="دقائق"
+                value={targetInputMinutes}
+                onChange={(e) => setTargetInputMinutes(Number(e.target.value))}
+                className="mt-2 w-1/2"
+              />
+            </div>
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="ghost" onClick={() => setTargetDialogOpen(false)} disabled={isUpdatingTarget}>
