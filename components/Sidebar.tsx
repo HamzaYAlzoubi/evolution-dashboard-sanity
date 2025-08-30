@@ -54,7 +54,7 @@ export default function Sidebar({ name }: any) {
           <Link className="p-4 dark:bg-[#6866F1] bg-[#101828] text-white rounded-b-xl" href="/home">الصفحة الرئيسية</Link>
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/projects">المشاريع</Link>
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/sessionsManager">مدير الجلسات</Link>
-          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/sessionsManager">ﺇحصائيات</Link>
+          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/statistics">ﺇحصائيات</Link>
         </nav>
         <div className="absolute bottom-10 left-0 w-full flex flex-col items-center gap-2 px-4 dark:text-white">
           {isMounted ? (
