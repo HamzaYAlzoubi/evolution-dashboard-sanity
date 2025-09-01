@@ -458,15 +458,18 @@ export default function ProjectsPage() {
                           return (
                             <SortableItem key={subProject._id} id={subProject._id} data={{ type: 'subProject', parentId: project._id }}>
                               <Card className="p-4 pt-2 pb-2 dark:border-gray-700 cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-between gap-2 pr-2">
+                                <div className="flex items-center justify-between gap-2 ">
+                                  
                                   <div className="flex items-center gap-2 mr-[-10px]">
                                     <span>{subProject.name}</span>
                                   </div>
+
                                   <Badge className="ml-2" variant={subProject.status === "نشط" ? "default" : subProject.status === "مكتمل" ? "secondary" : "destructive"}>
                                     {subProject.status}
                                   </Badge>
+
                                   <div className="flex items-center bg-green-5 ml-[-15px]">
-                                    <span className="text-sm text-gray-500 whitespe-nowrap dark:text-white">
+                                    <span className="text-[17px] whitespace-nowrap text-left bg-green-400 text-gray-500 dark:text-white">
                                       {showDetailedTime ? formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes) : `${subProjectTime.hours.toLocaleString()}h ${subProjectTime.minutes}m`}
                                     </span>
                                     <DropdownMenu>
@@ -481,6 +484,7 @@ export default function ProjectsPage() {
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
+
                                 </div>
                               </Card>
                             </SortableItem>
