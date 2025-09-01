@@ -457,10 +457,10 @@ export default function ProjectsPage() {
                           const subProjectTime = subProjectsTime[index];
                           return (
                             <SortableItem key={subProject._id} id={subProject._id} data={{ type: 'subProject', parentId: project._id }}>
-                              <Card className="p-4 pt-2 pb-2 dark:border-gray-700 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                              <Card className="pr-2 pt-2 pb-2 pl-0  dark:border-gray-700 cursor-pointer" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-between gap-2 ">
                                   
-                                  <div className="flex items-center gap-2 mr-[-10px]">
+                                  <div className="flex items-center gap-2">
                                     <span>{subProject.name}</span>
                                   </div>
 
@@ -468,7 +468,7 @@ export default function ProjectsPage() {
                                     {subProject.status}
                                   </Badge>
 
-                                  <div className="flex items-center bg-green-5 ml-[-15px]">
+                                  <div className="flex items-center bg-green-5">
                                     <span className={`${(showDetailedTime && (formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes).includes('w') || formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes).includes('mo') || formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes).includes('y'))) ? 'text-[15px]' : 'text-[17px] whitespace-nowrap'} text-left  text-gray-500 dark:text-white`}>
                                       {showDetailedTime ? formatTimeDetailed(subProjectTime.hours, subProjectTime.minutes) : `${subProjectTime.hours.toLocaleString()}h ${subProjectTime.minutes}m`}
                                     </span>
