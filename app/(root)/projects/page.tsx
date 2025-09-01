@@ -432,7 +432,7 @@ export default function ProjectsPage() {
                       {project.status}
                     </Badge>
                     <div className="flex items-center bg-green-5 ml-[-15px]">
-                      <span className={`${(showDetailedTime && (formatTimeDetailed(totalTime.hours, totalTime.minutes).includes('y') || formatTimeDetailed(totalTime.hours, totalTime.minutes).includes('mo'))) ? 'text-[13px]' : 'text-lg'} text-gray-500 whitespace-nowrap dark:text-white`}>
+                      <span className={`${(showDetailedTime && (formatTimeDetailed(totalTime.hours, totalTime.minutes).includes('y') || formatTimeDetailed(totalTime.hours, totalTime.minutes).includes('mo'))) ? 'text-[13px]' : 'text-[17px]'} text-gray-500 whitespace-nowrap dark:text-white`}>
                         {showDetailedTime ? formatTimeDetailed(totalTime.hours, totalTime.minutes) : formatSimpleTime(totalTime.hours, totalTime.minutes)}
                       </span>
                       <DropdownMenu>
