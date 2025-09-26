@@ -130,7 +130,7 @@ export default function StatisticsPage() {
                     <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">إنجاز الشهر</span>
                     <Badge className="text-base md:text-lg font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">{`${totalHoursMonth.toLocaleString()}h ${totalMinutesMonthRemainder}m`}</Badge>
                 </div>
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-1 mt-1">
                     <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">اليوم الأعلى إنجازًا</span>
                     <Badge className="text-base md:text-lg font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">
                         {sessions.length > 0 ? `${highestDayHours}h ${highestDayMinutes}m` : '--h --m'}
