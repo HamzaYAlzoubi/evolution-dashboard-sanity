@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { sanityClient } from "@/sanity/lib/client";
 import { USER_QUERY } from "@/sanity/lib/queries";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FaSpinner } from "react-icons/fa";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function StatisticsPage() {
   const { data: session, status } = useSession();
   const [sessions, setSessions] = useState<any[]>([]);
+  const [dailyTarget, setDailyTarget] = useState(240); // Default to 240 minutes (4 hours)
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,6 +20,7 @@ export default function StatisticsPage() {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         if (data) {
           setSessions(data.sessions || []);
+          setDailyTarget(data.dailyTarget || 240);
         }
         setIsLoading(false);
       });
@@ -35,13 +38,9 @@ export default function StatisticsPage() {
   const totalMinutesRemainder = totalMinutesAllTime % 60;
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const totalMinutesMonth = sessions
-    .filter(s => {
-      const sessionDate = new Date(s.date);
-      return sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear;
-    })
+    .filter(s => s.date && s.date.startsWith(currentYearMonth))
     .reduce((sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0);
   const totalHoursMonth = Math.floor(totalMinutesMonth / 60);
   const totalMinutesMonthRemainder = totalMinutesMonth % 60;
@@ -60,7 +59,6 @@ export default function StatisticsPage() {
   const totalHoursWeek = Math.floor(totalMinutesWeek / 60);
   const totalMinutesWeekRemainder = totalMinutesWeek % 60;
 
-  // --- Highest Achievement Day Logic --- //
   const sessionsByDay = sessions.reduce<Record<string, { totalMinutes: number }>>((acc, session) => {
     const date = session.date;
     if (!acc[date]) {
@@ -70,21 +68,28 @@ export default function StatisticsPage() {
     return acc;
   }, {});
 
-  // Exclude the specific date as requested by the user
   if (sessionsByDay['2025-07-26']) {
     delete sessionsByDay['2025-07-26'];
   }
 
-  let highestDay = { date: '--/--/----', totalMinutes: 0 };
+  let highestDay: [string, { totalMinutes: number }] = ['', { totalMinutes: 0 }];
   if (Object.keys(sessionsByDay).length > 0) {
       highestDay = Object.entries(sessionsByDay).reduce((highest, current) => {
           return current[1].totalMinutes > highest[1].totalMinutes ? current : highest;
-      }, ['', {totalMinutes: 0}]);
-      highestDay = { date: highestDay[0], totalMinutes: highestDay[1].totalMinutes };
+      });
   }
 
-  const highestDayHours = Math.floor(highestDay.totalMinutes / 60);
-  const highestDayMinutes = highestDay.totalMinutes % 60;
+  const highestDayHours = Math.floor(highestDay[1].totalMinutes / 60);
+  const highestDayMinutes = highestDay[1].totalMinutes % 60;
+
+  const dynamicMonthTitle = now.toLocaleString('ar-EG', { month: 'long', year: 'numeric' });
+
+  // --- Monthly Goal & Percentage Calculation ---
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const monthlyTargetMinutes = dailyTarget * daysInMonth;
+  const monthlyTargetHours = Math.floor(monthlyTargetMinutes / 60);
+  const monthlyProgressPercentage = monthlyTargetMinutes > 0 ? Math.round((totalMinutesMonth / monthlyTargetMinutes) * 100) : 0;
+
 
   if (isLoading) {
     return (
@@ -101,7 +106,7 @@ export default function StatisticsPage() {
                 <span className="text-base font-semibold text-muted-foreground">الإنجاز منذ البداية</span>
                 <Badge className="text-2xl md:text-3xl font-bold px-4 py-2 md:px-6 md:py-3 bg-primary text-primary-foreground rounded-xl shadow-lg">{`${totalHoursAllTime.toLocaleString()}h ${totalMinutesRemainder}m`}</Badge>
             </div>
-            <div className="flex flex-row items-start justify-center gap-4 sm:gap-10 m-3">
+            <div className="flex flex-row items-start justify-center gap-4 sm:gap-10">
                 <div className="flex flex-col items-center gap-2">
                     <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">إنجاز الأسبوع</span>
                     <Badge className="text-base md:text-lg font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">{`${totalHoursWeek.toLocaleString()}h ${totalMinutesWeekRemainder}m`}</Badge>
@@ -110,17 +115,49 @@ export default function StatisticsPage() {
                     <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">إنجاز الشهر</span>
                     <Badge className="text-base md:text-lg font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">{`${totalHoursMonth.toLocaleString()}h ${totalMinutesMonthRemainder}m`}</Badge>
                 </div>
-                <div className="flex flex-col items-center gap-1 mt-1">
+                <div className="flex flex-col items-center gap-1">
                     <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">اليوم الأعلى إنجازًا</span>
                     <Badge className="text-base md:text-lg font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">
                         {sessions.length > 0 ? `${highestDayHours}h ${highestDayMinutes}m` : '--h --m'}
                     </Badge>
                     <p className="text-xs text-muted-foreground">
-                        {sessions.length > 0 ? highestDay.date : '--/--/----'}
+                        {sessions.length > 0 ? highestDay[0] : '--/--/----'}
                     </p>
                 </div>
             </div>
         </Card>
+
+        {/* Second Row: Calendar and Chart */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-1">
+                <CardHeader className="flex flex-row justify-between items-center">
+                    <CardTitle className="text-lg font-semibold">{dynamicMonthTitle}</CardTitle>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">الهدف الشهري: {monthlyTargetHours} ساعة</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{monthlyProgressPercentage}%</span>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                    <Calendar
+                        mode="single"
+                        className="p-0"
+                        classNames={{ 
+                            head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                            cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                         }}
+                    />
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle>مخطط ساعات الإنجاز</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">سيتم بناء المخطط البياني هنا.</p>
+                </CardContent>
+            </Card>
+        </div>
     </div>
   );
 }

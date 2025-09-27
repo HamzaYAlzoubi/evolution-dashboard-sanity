@@ -117,11 +117,9 @@ export default function SessionsByDay() {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const totalMinutesMonth = sessions
-    .filter(s => {
-      const sessionDate = new Date(s.date);
-      return sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear;
-    })
+    .filter(s => s.date && s.date.startsWith(currentYearMonth))
     .reduce((sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0);
   const totalHoursMonth = Math.floor(totalMinutesMonth / 60);
   const totalMinutesMonthRemainder = totalMinutesMonth % 60;

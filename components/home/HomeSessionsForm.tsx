@@ -35,6 +35,14 @@ import { HiChevronLeft } from "react-icons/hi2";
 
 export default function HomeSessionsForm() {
   const { data: session, status } = useSession();
+  const getLocalDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [formData, setFormData] = useState({
     project: "",
     date: "",
@@ -50,7 +58,7 @@ export default function HomeSessionsForm() {
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      date: new Date().toISOString().split("T")[0],
+      date: getLocalDateString(),
     }));
   }, []);
 
@@ -59,7 +67,7 @@ export default function HomeSessionsForm() {
       sanityClient.fetch(USER_QUERY, { userId: session.user.id }).then((data) => {
         setUserData(data);
         if (data?.sessions) {
-          const today = new Date().toISOString().split("T")[0];
+          const today = getLocalDateString();
           const todaySessions = data.sessions.filter((s: any) => s.date === today);
           const totalMinutesToday = todaySessions.reduce((acc: number, s: any) => acc + (Number(s.hours) * 60) + Number(s.minutes), 0);
           if (totalMinutesToday >= data.dailyTarget) {
@@ -149,7 +157,7 @@ export default function HomeSessionsForm() {
         setTimeout(() => setsuccess(false), 3000);
         setFormData({
           project: "",
-          date: new Date().toISOString().split("T")[0],
+          date: getLocalDateString(),
           hours: "",
           minutes: "",
           notes: "",
