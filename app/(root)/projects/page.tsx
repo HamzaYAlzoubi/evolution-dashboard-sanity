@@ -422,16 +422,16 @@ export default function ProjectsPage() {
             const subProjectsTime = project.subProjects.map((sp) => calculateSessionTime(sp.sessions));
             return (
               <SortableItem key={project._id} id={project._id} data={{ type: 'project' }}>
-                <Card className="p-4 ">
+                <Card className=" pt-3 pb-3 pr-2">
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(project._id)}>
-                    <div className="flex items-center gap-2 mr-[-10px]">
+                    <div className="flex items-center gap-2 ">
                       {expanded.includes(project._id) ? <ChevronDown /> : <ChevronRight />}
-                      <span className="font-semibold ">{project.name}</span>
+                      <span className="font-semibold">{project.name}</span>
                     </div>
                     <Badge className="ml-2" variant={project.status === "نشط" ? "default" : project.status === "مكتمل" ? "secondary" : "destructive"}>
                       {project.status}
                     </Badge>
-                    <div className="flex items-center bg-green-5 ml-[-15px]">
+                    <div className="flex items-center bg-green-5">
                       <span className={`${(showDetailedTime && (formatTimeDetailed(totalTime.hours, totalTime.minutes).includes('y') || formatTimeDetailed(totalTime.hours, totalTime.minutes).includes('mo'))) ? 'text-[13px]' : 'text-[17px]'} text-gray-500 whitespace-nowrap dark:text-white`}>
                         {showDetailedTime ? formatTimeDetailed(totalTime.hours, totalTime.minutes) : formatSimpleTime(totalTime.hours, totalTime.minutes)}
                       </span>
@@ -460,7 +460,7 @@ export default function ProjectsPage() {
                               <Card className="pr-2 pt-2 pb-2 pl-0 whitespace-pre-line  dark:border-gray-700 cursor-pointer" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-between gap-2 ">
                                   
-                                  <div className="flex items-center gap-2 font-light">
+                                  <div className="flex items-center gap-2 font-light ">
                                     <span>{subProject.name}</span>
                                   </div>
 
