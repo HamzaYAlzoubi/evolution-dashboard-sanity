@@ -143,8 +143,8 @@ export default function StatisticsPage() {
         </Card>
 
         {/* Second Row: Calendar and Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
                 <CardHeader className="flex flex-row justify-between items-center">
                     <CardTitle className="text-lg font-semibold">{dynamicMonthTitle}</CardTitle>
                     <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export default function StatisticsPage() {
                         }}
                         className="p-0"
                         classNames={{ 
-                            months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                            months: "flex flex-col  space-y-4 sm:space-x-4 sm:space-y-0",
                             month: "space-y-4",
                             caption: "flex justify-center pt-1 relative items-center",
                             caption_label: "text-sm font-medium",
@@ -185,7 +185,7 @@ export default function StatisticsPage() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
+            <Card>
                 <CardHeader>
                     <CardTitle>مخطط ساعات الإنجاز</CardTitle>
                 </CardHeader>
