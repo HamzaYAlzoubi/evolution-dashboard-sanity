@@ -155,6 +155,7 @@ export default function StatisticsPage() {
                 <CardContent className="flex justify-center pt-2">
                     <Calendar
                         mode="single"
+                        winningDays={winningDaysSet}
                         modifiers={{ winning: isWinningDay }}
                         modifiersClassNames={{
                             winning: 'bg-primary text-primary-foreground rounded-md',

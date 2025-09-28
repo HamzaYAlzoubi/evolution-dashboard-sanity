@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Star,
 } from "lucide-react"
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
 
@@ -22,6 +23,7 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+  winningDays?: Set<string>
 }) {
   const defaultClassNames = getDefaultClassNames()
 
@@ -176,6 +178,7 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
+  children,
   ...props
 }: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames()
@@ -206,7 +209,10 @@ function CalendarDayButton({
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      <Star className="size-3" />
+    </Button>
   )
 }
 
