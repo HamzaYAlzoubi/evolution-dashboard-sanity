@@ -115,16 +115,17 @@ export default function StatisticsPage() {
 
   const yAxisDomain = [0, Math.ceil(dailyTarget / 60)];
 
-  // Placeholder data for now, as requested
-  const chartData = [
-    { date: "2025-09-01", hours: 2 },
-    { date: "2025-09-02", hours: 3 },
-    { date: "2025-09-03", hours: 1 },
-    { date: "2025-09-04", hours: 4 },
-    { date: "2025-09-05", hours: 2.5 },
-    { date: "2025-09-06", hours: 5 },
-    { date: "2025-09-07", hours: 3 },
-  ];
+  // --- Chart Data Preparation ---
+  const sortedDates = Object.keys(sessionsByDay).sort(
+    (a, b) => new Date(a).getTime() - new Date(b).getTime()
+  );
+
+  const last30DaysData = sortedDates.slice(-30).map(date => ({
+    date: date,
+    hours: parseFloat((sessionsByDay[date].totalMinutes / 60).toFixed(2)),
+  }));
+
+  const chartData = last30DaysData;
 
   if (isLoading) {
     return (
@@ -207,9 +208,9 @@ export default function StatisticsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>مخطط ساعات الإنجاز</CardTitle>
+                    <CardTitle>متتبع الانجاز</CardTitle>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-0 pt-4">
                     <ChartAreaDefault
                         chartData={chartData}
 
