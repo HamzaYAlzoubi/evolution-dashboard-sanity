@@ -457,7 +457,7 @@ export default function ProjectsPage() {
                           const subProjectTime = subProjectsTime[index];
                           return (
                             <SortableItem key={subProject._id} id={subProject._id} data={{ type: 'subProject', parentId: project._id }}>
-                              <Card className="pr-2 pt-2 pb-2 pl-0 whitespace-pre-line  dark:border-gray-700 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                              <Card className="pr-2 pt-2 pb-2 pl-0 ml-2 whitespace-pre-line  dark:border-gray-700 cursor-pointer" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-between gap-2 ">
                                   
                                   <div className="flex items-center gap-2 font-light ">
