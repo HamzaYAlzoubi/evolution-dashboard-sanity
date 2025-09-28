@@ -223,7 +223,7 @@ function CalendarDayButton({
       {...props}
     >
       {children}
-      <Star className={cn("size-3", { hidden: !isWinning })} />
+      <Star className={cn("size-3", { "hidden": !isWinning, "text-yellow-400 fill-yellow-400": isWinning })} />
     </Button>
   )
 }
