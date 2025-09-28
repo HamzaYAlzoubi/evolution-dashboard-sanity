@@ -155,7 +155,6 @@ export default function StatisticsPage() {
                 <CardContent className="flex justify-center pt-2">
                     <Calendar
                         mode="single"
-                        selected={new Date()} // To show the current month by default
                         modifiers={{ winning: isWinningDay }}
                         modifiersClassNames={{
                             winning: 'bg-primary text-primary-foreground rounded-md',
