@@ -149,7 +149,7 @@ export default function StatisticsPage() {
                     <CardTitle className="text-lg font-semibold">{dynamicMonthTitle}</CardTitle>
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">الهدف الشهري: {monthlyTargetHours} ساعة</span>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{monthlyProgressPercentage}%</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground dark:bg-primary dark:text-primary-foreground">{monthlyProgressPercentage}%</span>
                     </div>
                 </CardHeader>
                 <CardContent className="flex justify-center pt-2">
