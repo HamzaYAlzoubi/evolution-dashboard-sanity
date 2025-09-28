@@ -20,12 +20,23 @@ function Calendar({
   buttonVariant = "ghost",
   formatters,
   components,
+  winningDays,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
   winningDays?: Set<string>
 }) {
   const defaultClassNames = getDefaultClassNames()
+
+  const CustomDayButton = (dayButtonProps: React.ComponentProps<typeof DayButton>) => {
+    const date = dayButtonProps.day.date;
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const isWinning = winningDays?.has(dateString);
+
+    return (
+      <CalendarDayButton {...dayButtonProps} isWinning={isWinning} />
+    );
+  };
 
   return (
     <DayPicker
@@ -157,7 +168,7 @@ function Calendar({
             <ChevronDownIcon className={cn("size-4", className)} {...props} />
           )
         },
-        DayButton: CalendarDayButton,
+        DayButton: CustomDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
@@ -179,8 +190,9 @@ function CalendarDayButton({
   day,
   modifiers,
   children,
+  isWinning,
   ...props
-}: React.ComponentProps<typeof DayButton>) {
+}: React.ComponentProps<typeof DayButton> & { isWinning?: boolean }) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -211,7 +223,7 @@ function CalendarDayButton({
       {...props}
     >
       {children}
-      <Star className="size-3" />
+      <Star className={cn("size-3", { hidden: !isWinning })} />
     </Button>
   )
 }
