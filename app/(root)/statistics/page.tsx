@@ -8,6 +8,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FaSpinner } from "react-icons/fa";
 import { Calendar } from "@/components/ui/calendar";
+import { ChartAreaDefault } from "@/components/chart-area-default";
 
 export default function StatisticsPage() {
   const { data: session, status } = useSession();
@@ -111,6 +112,20 @@ export default function StatisticsPage() {
   }
 
 
+
+  const yAxisDomain = [0, Math.ceil(dailyTarget / 60)];
+
+  // Placeholder data for now, as requested
+  const chartData = [
+    { date: "2025-09-01", hours: 2 },
+    { date: "2025-09-02", hours: 3 },
+    { date: "2025-09-03", hours: 1 },
+    { date: "2025-09-04", hours: 4 },
+    { date: "2025-09-05", hours: 2.5 },
+    { date: "2025-09-06", hours: 5 },
+    { date: "2025-09-07", hours: 3 },
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -194,8 +209,12 @@ export default function StatisticsPage() {
                 <CardHeader>
                     <CardTitle>مخطط ساعات الإنجاز</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">سيتم بناء المخطط البياني هنا.</p>
+                <CardContent className="p-6">
+                    <ChartAreaDefault
+                        chartData={chartData}
+
+                        yAxisDomain={yAxisDomain}
+                    />
                 </CardContent>
             </Card>
         </div>
