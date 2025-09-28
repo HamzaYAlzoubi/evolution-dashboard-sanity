@@ -20,21 +20,21 @@ function Calendar({
   buttonVariant = "ghost",
   formatters,
   components,
-  winningDays,
+  winLevels,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
-  winningDays?: Set<string>
+  winLevels?: Map<string, number>
 }) {
   const defaultClassNames = getDefaultClassNames()
 
   const CustomDayButton = (dayButtonProps: React.ComponentProps<typeof DayButton>) => {
     const date = dayButtonProps.day.date;
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const isWinning = winningDays?.has(dateString);
+    const winLevel = winLevels?.get(dateString) || 0;
 
     return (
-      <CalendarDayButton {...dayButtonProps} isWinning={isWinning} />
+      <CalendarDayButton {...dayButtonProps} winLevel={winLevel} />
     );
   };
 
@@ -190,9 +190,9 @@ function CalendarDayButton({
   day,
   modifiers,
   children,
-  isWinning,
+  winLevel,
   ...props
-}: React.ComponentProps<typeof DayButton> & { isWinning?: boolean }) {
+}: React.ComponentProps<typeof DayButton> & { winLevel?: number }) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -223,7 +223,15 @@ function CalendarDayButton({
       {...props}
     >
       {children}
-      <Star className={cn("size-3", { "hidden": !isWinning, "text-yellow-400 fill-yellow-400": isWinning })} />
+      <div className="flex items-center justify-center">
+        {winLevel === 1 && <Star className="size-3 text-yellow-400 fill-yellow-400" />}
+        {winLevel === 2 && (
+          <>
+            <Star className="size-3 text-yellow-400 fill-yellow-400" />
+            <Star className="size-3 text-yellow-400 fill-yellow-400" />
+          </>
+        )}
+      </div>
     </Button>
   )
 }

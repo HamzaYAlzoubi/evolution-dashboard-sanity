@@ -91,18 +91,23 @@ export default function StatisticsPage() {
   const monthlyProgressPercentage = monthlyTargetMinutes > 0 ? Math.round((totalMinutesMonth / monthlyTargetMinutes) * 100) : 0;
 
   // --- Winning Days Calculation (Matcher Function Approach) ---
-  const winningDaysSet = new Set(
-    Object.entries(sessionsByDay)
-      .filter(([, data]) => data.totalMinutes >= dailyTarget)
-      .map(([dateString]) => dateString)
-  );
+  const winLevelsMap = new Map<string, number>();
+  if (dailyTarget > 0) {
+    Object.entries(sessionsByDay).forEach(([dateString, data]) => {
+      if (data.totalMinutes >= dailyTarget * 2) {
+        winLevelsMap.set(dateString, 2);
+      } else if (data.totalMinutes >= dailyTarget) {
+        winLevelsMap.set(dateString, 1);
+      }
+    });
+  }
 
   const isWinningDay = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
-    return winningDaysSet.has(dateString);
+    return winLevelsMap.has(dateString);
   }
 
 
@@ -155,7 +160,7 @@ export default function StatisticsPage() {
                 <CardContent className="flex justify-center pt-2">
                     <Calendar
                         mode="single"
-                        winningDays={winningDaysSet}
+                        winLevels={winLevelsMap}
                         modifiers={{ winning: isWinningDay }}
                         modifiersClassNames={{
                             winning: 'bg-primary text-primary-foreground rounded-md',
