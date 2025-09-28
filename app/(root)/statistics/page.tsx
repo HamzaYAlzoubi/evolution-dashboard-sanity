@@ -7,7 +7,7 @@ import { USER_QUERY } from "@/sanity/lib/queries";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FaSpinner } from "react-icons/fa";
-import { Calendar } from "@/components/StatisticsCalendar";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function StatisticsPage() {
   const { data: session, status } = useSession();

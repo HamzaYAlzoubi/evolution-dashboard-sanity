@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Star,
 } from "lucide-react"
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
 
@@ -19,11 +20,23 @@ function Calendar({
   buttonVariant = "ghost",
   formatters,
   components,
+  winLevels,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+  winLevels?: Map<string, number>
 }) {
   const defaultClassNames = getDefaultClassNames()
+
+  const CustomDayButton = (dayButtonProps: React.ComponentProps<typeof DayButton>) => {
+    const date = dayButtonProps.day.date;
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const winLevel = winLevels?.get(dateString) || 0;
+
+    return (
+      <CalendarDayButton {...dayButtonProps} winLevel={winLevel} />
+    );
+  };
 
   return (
     <DayPicker
@@ -110,7 +123,7 @@ function Calendar({
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn("rounded-r-md bg-accent", defaultClassNames.range_end),
         today: cn(
-          "bg-accent text-accent-foreground rounded-md data-[selected=true]:rounded-none",
+          "bg-accent text-accent-foreground dark:bg-slate-800 dark:text-muted-foreground rounded-md data-[selected=true]:rounded-none",
           defaultClassNames.today
         ),
         outside: cn(
@@ -155,7 +168,7 @@ function Calendar({
             <ChevronDownIcon className={cn("size-4", className)} {...props} />
           )
         },
-        DayButton: CalendarDayButton,
+        DayButton: CustomDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
@@ -176,8 +189,10 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
+  children,
+  winLevel,
   ...props
-}: React.ComponentProps<typeof DayButton>) {
+}: React.ComponentProps<typeof DayButton> & { winLevel?: number }) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -206,7 +221,18 @@ function CalendarDayButton({
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      <div className="flex items-center justify-center">
+        {winLevel === 1 && <Star className="size-3 text-yellow-400 fill-yellow-400" />}
+        {winLevel === 2 && (
+          <>
+            <Star className="size-3 text-yellow-400 fill-yellow-400" />
+            <Star className="size-3 text-yellow-400 fill-yellow-400" />
+          </>
+        )}
+      </div>
+    </Button>
   )
 }
 
