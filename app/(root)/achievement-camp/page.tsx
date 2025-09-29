@@ -123,36 +123,41 @@ const AchievementCampPage = async () => {
 
       {/* --- Podium Section --- */}
       {topThree.length >= 1 && (
-        <div className="w-full max-w-4xl my-8 flex justify-center items-end gap-4">
+        <div className="w-full max-w-4xl my-4 sm:my-8 flex justify-center items-end gap-2 sm:gap-4">
           {podiumOrder.map(orderIndex => {
             const user = topThree[orderIndex];
             if (!user) return null;
             const style = podiumStyles[orderIndex];
 
+            // Responsive sizes for Avatar and ProgressRing
+            const avatarSize = orderIndex === 0 ? "h-16 w-16 sm:h-20 sm:w-20" : "h-12 w-12 sm:h-16 sm:w-16";
+            const ringSize = orderIndex === 0 ? 80 : 64; // Base size for ring
+            const ringStrokeWidth = orderIndex === 0 ? 5 : 4;
+
             return (
-              <div key={user._id} className={`transform transition-transform duration-300 ${style.scale}`}>
-                <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor}`}>
-                  <CardHeader className="flex flex-col items-center gap-2 p-4">
-                    <span className="text-4xl">{style.icon}</span>
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 my-1">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
-                    <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={96} strokeWidth={6}>
-                      <Avatar className="h-20 w-20 border-2 border-white">
+              <div key={user._id} className={`transform transition-transform duration-300 ${style.scale} w-1/3 max-w-[180px]`}>
+                <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor} ${style.shadow}`}>
+                  <CardHeader className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4">
+                    <span className="text-3xl sm:text-4xl">{style.icon}</span>
+                    <p className="text-xxs sm:text-xs font-semibold text-gray-600 dark:text-gray-400 my-0.5 sm:my-1 text-center">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
+                    <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={ringSize} strokeWidth={ringStrokeWidth}>
+                      <Avatar className={`${avatarSize} border-2 border-white`}>
                         <AvatarImage src={user.image ? urlFor(user.image).width(100).url() : undefined} alt={user.name} />
                         <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
                       </Avatar>
                     </ProgressRing>
-                    <CardTitle className="text-center">{user.name}</CardTitle>
-                    <Badge className={`border ${getRankStyle(user.rankTitle)}`}>{user.rankTitle}</Badge>
+                    <CardTitle className="text-center text-sm sm:text-base">{user.name}</CardTitle>
+                    <Badge className={`border text-xxs sm:text-xs ${getRankStyle(user.rankTitle)}`}>{user.rankTitle}</Badge>
                   </CardHeader>
-                  <CardContent className="flex-grow flex flex-col justify-between p-4">
-                    <div className="space-y-3 text-center">
+                  <CardContent className="flex-grow flex flex-col justify-between p-2 sm:p-4">
+                    <div className="space-y-1 sm:space-y-3 text-center">
                       <div>
-                        <h3 className="font-semibold text-gray-600 dark:text-gray-300">الإنجاز الكلي</h3>
-                        <p className="text-xl font-bold">{formatMinutes(user.totalMinutes)}</p>
+                        <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">الإنجاز الكلي</h3>
+                        <p className="text-base sm:text-xl font-bold">{formatMinutes(user.totalMinutes)}</p>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-600 dark:text-gray-300">إنجاز اليوم</h3>
-                        <p className="text-lg font-bold">{formatMinutes(user.todayMinutes)}</p>
+                        <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">إنجاز اليوم</h3>
+                        <p className="text-sm sm:text-lg font-bold">{formatMinutes(user.todayMinutes)}</p>
                       </div>
                     </div>
                   </CardContent>
