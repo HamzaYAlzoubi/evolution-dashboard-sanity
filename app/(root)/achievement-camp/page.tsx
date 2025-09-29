@@ -119,18 +119,18 @@ const AchievementCampPage = async () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center p-4 sm:p-8 md:p-12">
-      <h1 className="text-4xl font-bold mb-4 text-center">لوحة صدارة الأبطال</h1>
+      <h1 className="text-4xl font-bold my-6 text-center">لوحة صدارة الأبطال</h1>
 
       {/* --- Podium Section --- */}
       {topThree.length >= 1 && (
-        <div className="w-full max-w-4xl my-4 sm:my-8 flex justify-center items-end gap-2 sm:gap-4">
+        <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-4">
           {podiumOrder.map(orderIndex => {
             const user = topThree[orderIndex];
             if (!user) return null;
             const style = podiumStyles[orderIndex];
 
             // Responsive sizes for Avatar and ProgressRing
-            const avatarSize = orderIndex === 0 ? "h-16 w-16 sm:h-20 sm:w-20" : "h-12 w-12 sm:h-16 sm:w-16";
+            const avatarSize = orderIndex === 0 ? "h-16 w-16 sm:h-18 sm:w-18" : "h-12 w-12 sm:h-14 sm:w-14";
             const ringSize = orderIndex === 0 ? 80 : 64; // Base size for ring
             const ringStrokeWidth = orderIndex === 0 ? 5 : 4;
 
