@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export function UserProfileForm({ onClose }: { onClose: () => void }) {
   const { data: session, update } = useSession();
   const router = useRouter();
-  const [userName, setUserName] = useState(session?.user?.name || '');
+  const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState(session?.user?.email || '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
