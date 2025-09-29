@@ -28,6 +28,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { UserProfileForm } from "@/components/auth/UserProfileForm";
+import { sanityClient } from '@/sanity/lib/client';
+import { urlFor } from '@/sanity/lib/image';
+
+interface User {
+  _id: string;
+  name: string;
+  image?: any;
+}
+
+const getUserQuery = `*[_type == "user" && _id == $userId][0] {
+  _id,
+  name,
+  image,
+}`;
 
 const navItems = [
   { name: "الرئيسية", href: "/home", icon: Home },
@@ -41,12 +57,14 @@ const Sidebar = () => {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('theme')) {
       return localStorage.getItem('theme') as 'light' | 'dark';
     }
     return 'light'; // Default theme
   });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -58,6 +76,18 @@ const Sidebar = () => {
       localStorage.setItem('theme', theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      sanityClient.fetch(getUserQuery, { userId: session.user.id })
+        .then(data => {
+          setCurrentUser(data);
+        })
+        .catch(error => {
+          console.error("Failed to fetch current user data:", error);
+        });
+    }
+  }, [session?.user?.id]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -128,18 +158,18 @@ const Sidebar = () => {
 
           {/* User Profile / Settings */}
           <div className="mt-auto pt-6 border-t border-border/50">
-            {session?.user ? (
+            {currentUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors duration-200">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={session.user.image || undefined} />
+                      <AvatarImage src={currentUser.image ? urlFor(currentUser.image).width(100).url() : undefined} />
                       <AvatarFallback>
-                        {session.user.name ? session.user.name[0] : "U"}
+                        {currentUser.name ? currentUser.name.charAt(0) : "U"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-base font-semibold text-foreground">
-                      {session.user.name || "User"}
+                      {currentUser.name || "User"}
                     </span>
                   </div>
                 </DropdownMenuTrigger>
@@ -150,10 +180,21 @@ const Sidebar = () => {
                     {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Profile settings")}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Profile
-                  </DropdownMenuItem>
+                  <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+                    <DialogTrigger asChild>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}> {/* Prevent dropdown from closing immediately */}
+                        <Settings className="h-4 w-4 mr-2" />
+                        Profile
+                      </DropdownMenuItem>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Profile</DialogTitle>
+                        <DialogDescription>Update your profile information and avatar.</DialogDescription>
+                      </DialogHeader>
+                      <UserProfileForm onClose={() => setIsProfileDialogOpen(false)} />
+                    </DialogContent>
+                  </Dialog>
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Log Out

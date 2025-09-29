@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function UserProfileForm() {
+export function UserProfileForm({ onClose }: { onClose: () => void }) {
   const { data: session, update } = useSession();
+  const router = useRouter();
   const [userName, setUserName] = useState(session?.user?.name || '');
   const [userEmail, setUserEmail] = useState(session?.user?.email || '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -98,7 +100,9 @@ export function UserProfileForm() {
     try {
       const sessionUpdatePayload = { name: userName, image: newImageUrl };
       await update(sessionUpdatePayload);
+      await update(); // Force a full session re-fetch from the server
       alert('تم تحديث الملف الشخصي بنجاح!');
+      onClose();
     } catch (error) {
       console.error('Failed to update Next-Auth session:', error);
       alert('فشل تحديث جلسة المستخدم. الرجاء تسجيل الخروج والدخول مرة أخرى لرؤية التغييرات.');
