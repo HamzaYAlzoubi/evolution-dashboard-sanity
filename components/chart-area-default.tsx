@@ -8,7 +8,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
-export function ChartAreaDefault({ chartData, yAxisDomain, targetLineValue }) {
+export function ChartAreaDefault({ chartData, yAxisDomain, targetLineValue = null }) {
   return (
     <ChartContainer config={{}} className="min-h-[300px] w-full">
       <AreaChart
