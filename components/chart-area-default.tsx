@@ -15,10 +15,10 @@ export function ChartAreaDefault({ chartData, yAxisDomain, targetLineValue }) {
         accessibilityLayer
         data={chartData}
         margin={{
-          top: 10,
+          top: 20,
           right: 30,
-          left: 0,
-          bottom: 0,
+          left: -15,
+          bottom: 10,
         }}
       >
         <defs>
@@ -33,14 +33,14 @@ export function ChartAreaDefault({ chartData, yAxisDomain, targetLineValue }) {
           dataKey="date"
           tickLine={false}
           axisLine={false}
-          tickMargin={8}
+          tickMargin={20}
           tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         />
         <YAxis 
           domain={yAxisDomain} 
           tickLine={false} 
           axisLine={false} 
-          tickMargin={8} 
+          tickMargin={18} 
           tickFormatter={(value) => `${value}h`}
         />
         <ChartTooltip

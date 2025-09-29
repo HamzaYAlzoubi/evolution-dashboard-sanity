@@ -15,6 +15,14 @@ export default {
       unique: true,
     },
     {
+      name: "image",
+      title: "Image",
+      type: "image",
+      options: {
+        hotspot: true, // Enables hotspot for cropping
+      },
+    },
+    {
       name: "password",
       title: "Password",
       type: "string",

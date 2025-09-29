@@ -85,6 +85,18 @@ export type User = {
   _rev: string;
   name?: string;
   email?: string;
+  image?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
   password?: string;
   dailyTarget?: number;
   projects?: Array<{

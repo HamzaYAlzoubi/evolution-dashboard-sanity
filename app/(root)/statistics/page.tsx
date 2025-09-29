@@ -207,8 +207,12 @@ export default function StatisticsPage() {
             </Card>
 
             <Card>
+
                 <CardHeader>
-                    <CardTitle>متتبع الانجاز</CardTitle>
+                 <CardTitle>
+			<Badge className="text-base  font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">ممتبع الإنجاز</Badge>
+		</CardTitle>                                 
+                
                 </CardHeader>
                 <CardContent className="p-0 pt-4">
                     <ChartAreaDefault

@@ -5,9 +5,18 @@ import { useState, useEffect } from "react";
 import { FiMenu } from "react-icons/fi";
 import { MdOutlineDarkMode } from "react-icons/md";
 import { LuSun } from "react-icons/lu";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { UserProfileForm } from "./auth/UserProfileForm";
 
 export default function Sidebar({ name }: any) {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,8 +64,30 @@ export default function Sidebar({ name }: any) {
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/projects">المشاريع</Link>
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/sessionsManager">مدير الجلسات</Link>
           <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/statistics">ﺇحصائيات</Link>
+          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/achievement-camp">معسكر الإنجاز</Link>
         </nav>
         <div className="absolute bottom-10 left-0 w-full flex flex-col items-center gap-2 px-4 dark:text-white">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                <span>الإعدادات</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>إعدادات التطبيق</DialogTitle>
+                <DialogDescription>
+                  هنا يمكنك تعديل إعدادات التطبيق.
+                </DialogDescription>
+              </DialogHeader>
+              <UserProfileForm />
+            </DialogContent>
+          </Dialog>
           {isMounted ? (
             <Button
               variant="outline"
