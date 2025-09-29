@@ -1,128 +1,178 @@
-'use client';
-import Link from "next/link"
-
+"use client";
 import { useState, useEffect } from "react";
-import { FiMenu } from "react-icons/fi";
-import { MdOutlineDarkMode } from "react-icons/md";
-import { LuSun } from "react-icons/lu";
-import { LogOut, Settings } from "lucide-react";
-import { signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { UserProfileForm } from "./auth/UserProfileForm";
+  Home,
+  Users,
+  ClipboardList,
+  BarChart,
+  Award,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Calendar,
+  Sun,
+  Moon,
+  BookOpen,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export default function Sidebar({ name }: any) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dark, setDark] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+const navItems = [
+  { name: "الرئيسية", href: "/home", icon: Home },
+  { name: "المشاريع", href: "/projects", icon: ClipboardList },
+  { name: "الإحصائيات", href: "/statistics", icon: BarChart },
+  { name: "مدير الجلسات", href: "/sessionsManager", icon: BookOpen },
+  { name: "معسكر الإنجاز", href: "/achievement-camp", icon: Award },
+];
+
+const Sidebar = () => {
+  const { data: session } = useSession();
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('theme')) {
+      return localStorage.getItem('theme') as 'light' | 'dark';
+    }
+    return 'light'; // Default theme
+  });
 
   useEffect(() => {
-    setIsMounted(true);
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      setDark(true);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, []);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', theme);
+    }
+  }, [theme]);
 
-  useEffect(() => {
-    if (isMounted) {
-      if (dark) {
-        document.documentElement.classList.add("dark");
-        localStorage.setItem("theme", "dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        localStorage.setItem("theme", "light");
-      }
-    }
-  }, [dark, isMounted]);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   return (
     <>
-      <button
-        className="md:hidden fixed top-4 right-4 z-50 p-2 text-2xl bg-white dark:bg-gray-900 dark:text-gray-100 rounded-md shadow"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <FiMenu />
-      </button>
-
-      <aside
-        className={`
-            fixed top-0 right-0 h-screen w-64 text-gray-900 bg-white dark:bg-[#0F172B] p-4 z-50 transform transition-transform duration-300
-            ${isOpen ? "translate-x-0" : "translate-x-full"}
-            md:translate-x-0 md:block 
-          `}
-      >
-        <nav className="flex flex-col space-y-4 p-4">
-          <Link className="p-4 dark:bg-[#6866F1] bg-[#101828] text-white rounded-b-xl" href="/home">الصفحة الرئيسية</Link>
-          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/projects">المشاريع</Link>
-          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/sessionsManager">مدير الجلسات</Link>
-          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/statistics">ﺇحصائيات</Link>
-          <Link className="p-4 dark:bg-[#6866F1] bg-[#0F172B] text-white rounded-b-xl" href="/achievement-camp">معسكر الإنجاز</Link>
-        </nav>
-        <div className="absolute bottom-10 left-0 w-full flex flex-col items-center gap-2 px-4 dark:text-white">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                <span>الإعدادات</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>إعدادات التطبيق</DialogTitle>
-                <DialogDescription>
-                  هنا يمكنك تعديل إعدادات التطبيق.
-                </DialogDescription>
-              </DialogHeader>
-              <UserProfileForm />
-            </DialogContent>
-          </Dialog>
-          {isMounted ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={() => setDark((prev) => !prev)}
-            >
-              {dark ? <LuSun /> : <MdOutlineDarkMode />}
-              <span>{dark ? 'وضع نهاري' : 'وضع ليلي'}</span>
-            </Button>
-          ) : (
-            <div className="w-full h-9 rounded-md bg-gray-200 dark:bg-gray-900 animate-pulse"></div>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full flex items-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            تسجيل الخروج
+      {/* Mobile Menu Button */}
+      {!isMobileMenuOpen && (
+        <div className="md:hidden fixed top-4 right-4 z-50">
+          <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
+            <Menu className="h-8 w-8" />
           </Button>
+        </div>
+      )}
 
-          <div className="text-sm text-gray-600 dark:text-gray-400 mt-[10px]">
-            مرحباً، {name}
+      {/* Overlay for mobile menu */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={toggleMobileMenu}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 right-0 z-40 w-64 bg-card border-r p-6 transition-transform duration-500 ease-in-out rounded-l-2xl shadow-lg
+          ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
+          md:translate-x-0`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo/App Name */}
+          <div className="mb-8 text-3xl font-extrabold text-primary flex justify-center items-center">
+            <div>
+              السبيل
+              <p className="text-lg font-semibold text-muted-foreground">Al-Sabeel</p>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-grow">
+            <ul className="space-y-2">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 py-3 px-4 rounded-lg text-base font-medium transition-colors duration-200
+                        ${isActive
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        }`}
+                      onClick={() => setIsMobileMenuOpen(false)} // Close mobile menu on link click
+                    >
+                      <item.icon className="h-6 w-6" />
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* User Profile / Settings */}
+          <div className="mt-auto pt-6 border-t border-border/50">
+            {session?.user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors duration-200">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={session.user.image || undefined} />
+                      <AvatarFallback>
+                        {session.user.name ? session.user.name[0] : "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-base font-semibold text-foreground">
+                      {session.user.name || "User"}
+                    </span>
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={toggleTheme}>
+                    {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Profile settings")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-3 py-3 px-4 text-base font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                  <LogOut className="h-6 w-6" />
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </aside>
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-[rgba(0,0,0,0.1)] z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
     </>
   );
-}
+};
+
+export default Sidebar;
