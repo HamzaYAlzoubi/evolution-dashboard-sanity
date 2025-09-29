@@ -123,7 +123,7 @@ const AchievementCampPage = async () => {
 
       {/* --- Podium Section --- */}
       {topThree.length >= 1 && (
-        <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-4">
+        <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-3">
           {podiumOrder.map(orderIndex => {
             const user = topThree[orderIndex];
             if (!user) return null;
@@ -136,10 +136,10 @@ const AchievementCampPage = async () => {
 
             return (
               <div key={user._id} className={`transform transition-transform duration-300 ${style.scale} w-1/3 max-w-[180px]`}>
-                <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor} ${style.shadow}`}>
+                <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor}`}>
                   <CardHeader className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4">
                     <span className="text-3xl sm:text-4xl">{style.icon}</span>
-                    <p className="text-xxs sm:text-xs font-semibold text-gray-600 dark:text-gray-400 my-0.5 sm:my-1 text-center">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
+                    <p className="text-[0.6rem] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 my-0.5 sm:my-1 text-center">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
                     <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={ringSize} strokeWidth={ringStrokeWidth}>
                       <Avatar className={`${avatarSize} border-2 border-white`}>
                         <AvatarImage src={user.image ? urlFor(user.image).width(100).url() : undefined} alt={user.name} />
