@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { UserProfileForm } from "@/components/auth/UserProfileForm";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import { sanityClient } from '@/sanity/lib/client';
 import { urlFor } from '@/sanity/lib/image';
 
@@ -58,6 +59,7 @@ const Sidebar = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('theme')) {
       return localStorage.getItem('theme') as 'light' | 'dark';
@@ -180,21 +182,11 @@ const Sidebar = () => {
                     {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </DropdownMenuItem>
-                  <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
-                    <DialogTrigger asChild>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}> {/* Prevent dropdown from closing immediately */}
+                  <DropdownMenuItem onClick={() => setIsSettingsDialogOpen(true)} onSelect={(e) => e.preventDefault()}> {/* Prevent dropdown from closing immediately */}
                         <Settings className="h-4 w-4 mr-2" />
                         Profile
                       </DropdownMenuItem>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Edit Profile</DialogTitle>
-                        <DialogDescription>Update your profile information and avatar.</DialogDescription>
-                      </DialogHeader>
-                      <UserProfileForm onClose={() => setIsProfileDialogOpen(false)} />
-                    </DialogContent>
-                  </Dialog>
+                  <SettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Log Out

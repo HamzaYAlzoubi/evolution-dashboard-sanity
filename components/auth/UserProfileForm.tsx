@@ -116,55 +116,60 @@ export function UserProfileForm({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>تعديل الملف الشخصي</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-24 w-24">
+    <div className="p-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex flex-col items-center gap-4 mb-6">
+          <div className="relative group">
+            <Avatar className="h-28 w-28 border-4 border-primary/50 shadow-lg">
               <AvatarImage src={session.user?.image || undefined} alt={session.user?.name || 'User Avatar'} />
-              <AvatarFallback>{session.user?.name?.charAt(0) || '?'}</AvatarFallback>
+              <AvatarFallback className="text-2xl font-semibold">{session.user?.name?.charAt(0) || '?'}</AvatarFallback>
             </Avatar>
-            <Label htmlFor="avatar-upload" className="cursor-pointer text-blue-600 hover:underline">
-              تغيير الصورة الرمزية
+            <Label htmlFor="avatar-upload" className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-sm font-medium rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              تغيير
             </Label>
-            <Input
-              id="avatar-upload"
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-              accept="image/*"
-            />
           </div>
+          <Input
+            id="avatar-upload"
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept="image/*"
+          />
+        </div>
 
+        <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">الاسم</Label>
+            <Label htmlFor="name" className="text-sm font-medium text-foreground">الاسم</Label>
             <Input
               id="name"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               disabled={isSaving}
+              className="h-10 px-3 py-2 text-base border border-input rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Label htmlFor="email" className="text-sm font-medium text-foreground">البريد الإلكتروني</Label>
             <Input
               id="email"
               type="email"
               value={userEmail}
               disabled
-              className="bg-gray-100 dark:bg-gray-800"
+              className="h-10 px-3 py-2 text-base border border-input rounded-md bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
             />
           </div>
+        </div>
 
-          <Button type="submit" className="w-full" disabled={isSaving}>
+        <div className="flex gap-2 pt-4">
+          <Button type="submit" className="flex-grow h-10 text-base font-semibold shadow-md" disabled={isSaving}>
             {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
           </Button>
-        </form>
-      </CardContent>
-    </Card>
+          <Button type="button" variant="outline" className="flex-grow h-10 text-base font-semibold" onClick={onClose}>
+            إلغاء
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
