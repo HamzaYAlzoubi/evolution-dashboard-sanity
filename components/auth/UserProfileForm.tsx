@@ -23,14 +23,10 @@ export function UserProfileForm() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('--- [SUBMIT] Starting profile update process ---');
 
     if (!session?.user?.id) {
-      console.error('[SUBMIT] CRITICAL: No session.user.id found.', session);
       return;
     }
-    console.log('[SUBMIT] Session object:', session);
-    console.log(`[SUBMIT] User ID: ${session.user.id}`);
 
     setIsSaving(true);
 
@@ -39,11 +35,9 @@ export function UserProfileForm() {
 
     const nameHasChanged = userName !== session.user.name;
     const avatarHasChanged = avatarFile !== null;
-    console.log(`[SUBMIT] Name changed: ${nameHasChanged}, Avatar changed: ${avatarHasChanged}`);
 
     // 1. Handle Avatar Upload
     if (avatarHasChanged) {
-      console.log('[AVATAR] Avatar has changed, starting upload...');
       const formData = new FormData();
       formData.append('avatar', avatarFile as File);
       formData.append('userId', session.user.id);
@@ -54,20 +48,17 @@ export function UserProfileForm() {
           body: formData,
         });
 
-        console.log('[AVATAR] Raw upload response:', uploadResponse);
         const responseBody = await uploadResponse.json();
 
         if (!uploadResponse.ok) {
-          console.error('[AVATAR] Upload API returned an error:', responseBody);
           throw new Error(responseBody.message || `Server error: ${uploadResponse.statusText}`);
         }
 
-        console.log('[AVATAR] Upload successful. API response body:', responseBody);
         newImageUrl = responseBody.imageUrl;
         assetRefPayload = { _ref: responseBody.assetRef, _type: 'reference' };
 
       } catch (error) {
-        console.error('[AVATAR] FATAL: Caught exception during avatar upload fetch:', error);
+        console.error('Avatar upload failed:', error);
         alert(`فشل تحميل الصورة الرمزية. تحقق من الكونسول لمزيد من التفاصيل.`);
         setIsSaving(false);
         return;
@@ -76,13 +67,11 @@ export function UserProfileForm() {
 
     // 2. Handle Profile Update in Sanity
     if (nameHasChanged || assetRefPayload) {
-      console.log('[PROFILE] Name or avatar has changed, starting profile update...');
       const payload = {
         userId: session.user.id,
         name: userName,
         ...(assetRefPayload && { image: assetRefPayload }),
       };
-      console.log('[PROFILE] Payload for update-profile API:', payload);
 
       try {
         const updateProfileResponse = await fetch('/api/user/update-profile', {
@@ -91,18 +80,14 @@ export function UserProfileForm() {
           body: JSON.stringify(payload),
         });
 
-        console.log('[PROFILE] Raw update response:', updateProfileResponse);
         const responseBody = await updateProfileResponse.json();
 
         if (!updateProfileResponse.ok) {
-          console.error('[PROFILE] Update API returned an error:', responseBody);
           throw new Error(responseBody.message || `Server error: ${updateProfileResponse.statusText}`);
         }
 
-        console.log('[PROFILE] Update successful. API response body:', responseBody);
-
       } catch (error) {
-        console.error('[PROFILE] FATAL: Caught exception during profile update fetch:', error);
+        console.error('Profile update failed:', error);
         alert(`فشل تحديث الملف الشخصي. تحقق من الكونسول لمزيد من التفاصيل.`);
         setIsSaving(false);
         return;
@@ -110,19 +95,15 @@ export function UserProfileForm() {
     }
 
     // 3. Update Next-Auth session
-    console.log('[SESSION] All server operations successful. Attempting to update Next-Auth session...');
     try {
       const sessionUpdatePayload = { name: userName, image: newImageUrl };
-      console.log('[SESSION] Payload for Next-Auth update():', sessionUpdatePayload);
       await update(sessionUpdatePayload);
-      console.log('[SESSION] Next-Auth session updated successfully.');
       alert('تم تحديث الملف الشخصي بنجاح!');
     } catch (error) {
-      console.error('[SESSION] FATAL: Failed to update Next-Auth session:', error);
+      console.error('Failed to update Next-Auth session:', error);
       alert('فشل تحديث جلسة المستخدم. الرجاء تسجيل الخروج والدخول مرة أخرى لرؤية التغييرات.');
     } finally {
       setIsSaving(false);
-      console.log('--- [SUBMIT] End of profile update process ---');
     }
   };
 
