@@ -2,6 +2,7 @@
 import CredentialsProvider from "next-auth/providers/credentials"
 import type { NextAuthOptions } from "next-auth"
 import { sanityClient } from "@/sanity/lib/client"
+import { urlFor } from "@/sanity/lib/image"
 import { compare } from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
@@ -65,9 +66,20 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token?.id) {
         session.user.id = token.id as string
-        session.user.dailyTarget = token.dailyTarget as number
+
+        const query = `*[_type == 'user' && _id == $userId][0]`
+        try {
+          const latestUser = await sanityClient.fetch(query, { userId: token.id })
+          if (latestUser) {
+            session.user.name = latestUser.name
+            session.user.image = latestUser.image ? urlFor(latestUser.image).width(100).url() : null
+            session.user.dailyTarget = latestUser.dailyTarget
+          }
+        } catch (error) {
+          console.error("Error fetching user data for session:", error)
+        }
       }
       return session
     },

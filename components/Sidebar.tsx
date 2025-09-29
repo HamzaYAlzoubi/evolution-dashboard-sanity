@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { UserProfileForm } from "@/components/auth/UserProfileForm";
-import { SettingsDialog } from "@/components/SettingsDialog";
+import NewSettingsDialog from "@/components/NewSettingsDialog";
 import { sanityClient } from '@/sanity/lib/client';
 import { urlFor } from '@/sanity/lib/image';
 
@@ -182,11 +182,11 @@ const Sidebar = () => {
                     {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsSettingsDialogOpen(true)} onSelect={(e) => e.preventDefault()}> {/* Prevent dropdown from closing immediately */}
+                  <DropdownMenuItem onClick={() => setIsSettingsDialogOpen(true)} onSelect={(e) => e.preventDefault()}>
                         <Settings className="h-4 w-4 mr-2" />
-                        Profile
+                        الإعدادات
                       </DropdownMenuItem>
-                  <SettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} />
+                  <NewSettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Log Out

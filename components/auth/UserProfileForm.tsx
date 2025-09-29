@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,12 @@ export function UserProfileForm({ onClose }: { onClose: () => void }) {
   const [userEmail, setUserEmail] = useState(session?.user?.email || '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.name) {
+      setUserName(session.user.name);
+    }
+  }, [session?.user?.name]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -98,6 +104,7 @@ export function UserProfileForm({ onClose }: { onClose: () => void }) {
 
     // 3. Update Next-Auth session
     try {
+      router.refresh();
       const sessionUpdatePayload = { name: userName, image: newImageUrl };
       await update(sessionUpdatePayload);
       await update(); // Force a full session re-fetch from the server
