@@ -14,7 +14,7 @@ export default async function RootLayout({
   }
   return (
     <div dir="rtl" className="md:mr-64 duration-300">
-      <Sidebar name={session?.user?.name} />
+      <Sidebar />
       {children}
     </div>
   );
