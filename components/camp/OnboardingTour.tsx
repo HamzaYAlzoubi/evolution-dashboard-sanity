@@ -238,7 +238,7 @@ export const OnboardingTour = () => {
   const [step, setStep] = useState(1);
 
   useEffect(() => {
-    const hasSeenTour = hasSeenOnboardingTour_v2;
+    const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour_v2');
     if (!hasSeenTour) {
       setIsOpen(true);
     }
@@ -250,7 +250,7 @@ export const OnboardingTour = () => {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
         // If dialog is closed for any reason, mark tour as seen
-        localStorage.setItem('hasSeenOnboardingTour_v1', 'true');
+hasSeenOnboardingTour_v2', 'true');
     }
     setIsOpen(open);
     // Reset step count when dialog is closed
