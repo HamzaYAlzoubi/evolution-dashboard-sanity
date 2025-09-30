@@ -31,6 +31,7 @@ const getRankStyle = (rankTitle: string) => {
   switch (rankTitle) {
     case "أمير المؤمنين": return "bg-yellow-200 text-yellow-800 border-yellow-300";
     case "أمير": return "bg-red-200 text-red-800 border-red-300";
+    case "النبلاء": return "bg-pink-200 text-pink-800 border-pink-300";
     case "قائد": return "bg-purple-200 text-purple-800 border-purple-300";
     case "فارس": return "bg-indigo-200 text-indigo-800 border-indigo-300";
     case "مجتهد": return "bg-blue-200 text-blue-800 border-blue-300";
@@ -158,32 +159,46 @@ const tourSteps = [
   },
   {
     title: "ارتقِ في الرتب",
-    content: "كلما زادت ساعات إنجازك الكلية، ارتفعت رتبتك.",
+    content: "كلما زادت ساعات إنجازك، ارتفعت رتبتك. لكن رتبة \"أمير المؤمنين\" هي لقب فريد يُمنح فقط لصاحب المركز الأول على الإطلاق.",
     visual: () => (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-4 w-full max-w-xs mx-auto">
-            <div className="flex flex-col items-center gap-1">
-                <Badge className={`border text-xs ${getRankStyle("مبتدئ")}`}>مبتدئ</Badge>
-                <span className="text-xs text-muted-foreground">0+ ساعة</span>
+        <div className="flex flex-col items-center w-full gap-6">
+            {/* Top Rank */}
+            <div className="flex flex-col items-center gap-1 transform scale-110">
+                <span className="text-lg -mb-1">👑</span>
+                <div className="shadow-[0_0_15px_rgba(252,211,77,0.7)] rounded-lg">
+                    <Badge className={`border text-xs ${getRankStyle("أمير المؤمنين")}`}>أمير المؤمنين</Badge>
+                </div>
+                <span className="text-xs text-muted-foreground mt-1">1000+ ساعة</span>
             </div>
-            <div className="flex flex-col items-center gap-1">
-                <Badge className={`border text-xs ${getRankStyle("مجتهد")}`}>مجتهد</Badge>
-                <span className="text-xs text-muted-foreground">50+ ساعة</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-                <Badge className={`border text-xs ${getRankStyle("فارس")}`}>فارس</Badge>
-                <span className="text-xs text-muted-foreground">150+ ساعة</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-                <Badge className={`border text-xs ${getRankStyle("قائد")}`}>قائد</Badge>
-                <span className="text-xs text-muted-foreground">300+ ساعة</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-                <Badge className={`border text-xs ${getRankStyle("أمير")}`}>أمير</Badge>
-                <span className="text-xs text-muted-foreground">500+ ساعة</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-                <Badge className={`border text-xs ${getRankStyle("أمير المؤمنين")}`}>أمير المؤمنين</Badge>
-                <span className="text-xs text-muted-foreground">1000+ ساعة</span>
+
+            <hr className="w-1/2 border-gray-300 dark:border-gray-700" />
+
+            {/* Other Ranks */}
+            <div className="grid grid-cols-3 gap-x-2 gap-y-4 w-full max-w-xs">
+                <div className="flex flex-col items-center gap-1">
+                    <Badge className={`border text-xs ${getRankStyle("أمير")}`}>أمير</Badge>
+                    <span className="text-xs text-muted-foreground">800+ ساعة</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <Badge className={`border text-xs ${getRankStyle("النبلاء")}`}>النبلاء</Badge>
+                    <span className="text-xs text-muted-foreground">500+ ساعة</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <Badge className={`border text-xs ${getRankStyle("قائد")}`}>قائد</Badge>
+                    <span className="text-xs text-muted-foreground">300+ ساعة</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <Badge className={`border text-xs ${getRankStyle("فارس")}`}>فارس</Badge>
+                    <span className="text-xs text-muted-foreground">150+ ساعة</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <Badge className={`border text-xs ${getRankStyle("مجتهد")}`}>مجتهد</Badge>
+                    <span className="text-xs text-muted-foreground">50+ ساعة</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <Badge className={`border text-xs ${getRankStyle("مبتدئ")}`}>مبتدئ</Badge>
+                    <span className="text-xs text-muted-foreground">0+ ساعة</span>
+                </div>
             </div>
         </div>
     ),

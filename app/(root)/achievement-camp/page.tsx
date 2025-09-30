@@ -36,6 +36,7 @@ const getRankStyle = (rankTitle: string) => {
   switch (rankTitle) {
     case "أمير المؤمنين": return "bg-yellow-200 text-yellow-800 border-yellow-300";
     case "أمير": return "bg-red-200 text-red-800 border-red-300";
+    case "النبلاء": return "bg-pink-200 text-pink-800 border-pink-300";
     case "قائد": return "bg-purple-200 text-purple-800 border-purple-300";
     case "فارس": return "bg-indigo-200 text-indigo-800 border-indigo-300";
     case "مجتهد": return "bg-blue-200 text-blue-800 border-blue-300";
@@ -43,11 +44,18 @@ const getRankStyle = (rankTitle: string) => {
   }
 };
 
-// Helper function to determine rank based on total minutes
-const getRank = (totalMinutes: number) => {
+// Helper function to determine rank based on total minutes and position
+const getRank = (totalMinutes: number, rankIndex: number) => {
   const totalHours = totalMinutes / 60;
-  if (totalHours >= 1000) return "أمير المؤمنين";
-  if (totalHours >= 500) return "أمير";
+
+  // The #1 ranked user gets the exclusive title IF they meet the hour requirement.
+  if (rankIndex === 0 && totalHours >= 1000) {
+    return "أمير المؤمنين";
+  }
+
+  // For all other users, use the standard progression.
+  if (totalHours >= 800) return "أمير";
+  if (totalHours >= 500) return "النبلاء";
   if (totalHours >= 300) return "قائد";
   if (totalHours >= 150) return "فارس";
   if (totalHours >= 50) return "مجتهد";
@@ -99,7 +107,8 @@ const AchievementCampPage = () => {
       const users: User[] = await sanityClient.fetch(getUsersQuery);
       const today = new Date().toISOString().split('T')[0];
 
-      const processedUsers = users.map(user => {
+      // Step 1: Process minutes for each user
+      const usersWithMinutes = users.map(user => {
         const totalMinutes = user.sessions?.reduce((acc, s) => {
           if (!s) return acc;
           const hours = Number(s.hours || 0);
@@ -116,12 +125,19 @@ const AchievementCampPage = () => {
             return acc + (hours * 60) + minutes;
           }, 0) || 0;
 
-        const rankTitle = getRank(totalMinutes);
-        return { ...user, totalMinutes, todayMinutes, rankTitle };
+        return { ...user, totalMinutes, todayMinutes };
       });
 
-      processedUsers.sort((a, b) => b.totalMinutes - a.totalMinutes);
-      setUsersWithStats(processedUsers);
+      // Step 2: Sort users by total minutes to establish ranks
+      usersWithMinutes.sort((a, b) => b.totalMinutes - a.totalMinutes);
+
+      // Step 3: Assign rank titles based on sorted position
+      const finalUsersWithStats = usersWithMinutes.map((user, index) => {
+        const rankTitle = getRank(user.totalMinutes, index);
+        return { ...user, rankTitle };
+      });
+
+      setUsersWithStats(finalUsersWithStats);
       setLoading(false);
     };
 
