@@ -8,6 +8,9 @@ import { urlFor } from '@/sanity/lib/image';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Heart } from "lucide-react";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 
 // Helper function to format minutes into a readable string (e.g., "1,000h 25m")
 const formatMinutes = (totalMinutes: number) => {
@@ -220,24 +223,101 @@ const AchievementCampPage = () => {
 
       <Dialog open={!!selectedUser} onOpenChange={(isOpen) => { if (!isOpen) setSelectedUser(null); }}>
         <DialogContent>
-          {selectedUser && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-center">{selectedUser.name}</DialogTitle>
-              </DialogHeader>
-              <div className="flex flex-col items-center gap-2 pt-4">
-                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{`تحدي المعسكر: ${Math.round(Math.min((selectedUser.todayMinutes / 240) * 100, 100))}%`}</p>
-                <ProgressRing progress={Math.min((selectedUser.todayMinutes / 240) * 100, 100)} size={80} strokeWidth={5}>
-                  <Avatar className="w-18 h-18 border-2 border-white">
-                    <AvatarImage src={selectedUser.image ? urlFor(selectedUser.image).width(100).url() : undefined} alt={selectedUser.name} />
-                    <AvatarFallback>{selectedUser.name ? selectedUser.name.charAt(0) : '?'}</AvatarFallback>
-                  </Avatar>
-                </ProgressRing>
-                <h2 className="pt-2 text-xl font-bold">{selectedUser.name}</h2>
-                <Badge className={`border text-xs ${getRankStyle(selectedUser.rankTitle)}`}>{selectedUser.rankTitle}</Badge>
-              </div>
-            </>
-          )}
+          {selectedUser && (() => {
+            // Data processing for the chart
+            const processChartData = (sessions: typeof selectedUser.sessions) => {
+              const sessionMap = new Map<string, number>();
+              sessions?.forEach(s => {
+                if (!s) return;
+                const date = s.date.split('T')[0];
+                const totalMinutes = (s.hours || 0) * 60 + (s.minutes || 0);
+                sessionMap.set(date, (sessionMap.get(date) || 0) + totalMinutes);
+              });
+
+              const data = [];
+              for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateString = date.toISOString().split('T')[0];
+                data.push({
+                  name: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  minutes: sessionMap.get(dateString) || 0,
+                });
+              }
+              return data;
+            };
+            const chartData = processChartData(selectedUser.sessions);
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-center">{selectedUser.name}</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center gap-4 pt-4 max-h-[80vh] overflow-y-auto no-scrollbar px-2">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{`تحدي المعسكر: ${Math.round(Math.min((selectedUser.todayMinutes / 240) * 100, 100))}%`}</p>
+                  <ProgressRing progress={Math.min((selectedUser.todayMinutes / 240) * 100, 100)} size={80} strokeWidth={5}>
+                    <Avatar className="w-18 h-18 border-2 border-white">
+                      <AvatarImage src={selectedUser.image ? urlFor(selectedUser.image).width(100).url() : undefined} alt={selectedUser.name} />
+                      <AvatarFallback>{selectedUser.name ? selectedUser.name.charAt(0) : '?'}</AvatarFallback>
+                    </Avatar>
+                  </ProgressRing>
+                  <h2 className="pt-2 text-xl font-bold">{selectedUser.name}</h2>
+                  <Badge className={`border text-xs ${getRankStyle(selectedUser.rankTitle)}`}>{selectedUser.rankTitle}</Badge>
+
+                  <div className="mt-6 w-full rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
+                    <h3 className="mb-2 text-center text-sm font-medium text-slate-500 dark:text-slate-400">هدف المعسكر</h3>
+                    <blockquote className="text-center text-base font-semibold text-slate-700 dark:text-slate-200">
+                      "بناء 5 متاجر إلكترونية قوية ومتكاملة خلال فترة المعسكر."
+                    </blockquote>
+                  </div>
+
+                  <div className="mt-4 w-full">
+                    <h3 className="mb-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">الفرص المتبقية</h3>
+                    <div className="flex justify-center gap-4">
+                      {Array.from({ length: 3 }).map((_, index) => {
+                        const livesLost = 1; // Placeholder
+                        const isLost = index < livesLost;
+                        return <Heart key={index} className={`h-8 w-8 transition-all ${isLost ? 'fill-slate-300 stroke-slate-400 dark:fill-slate-700 dark:stroke-slate-500' : 'fill-red-500 stroke-red-600'}`} />;
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Chart Section */}
+                  <div className="mt-4 w-full">
+                    <h3 className="mb-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">النشاط اليومي (آخر 30 يومًا)</h3>
+                    <div className="h-48 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                          <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} unit="m" />
+                          <ChartTooltip
+                            cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
+                            contentStyle={{ backgroundColor: '#ffffffaa', border: '1px solid #ccc', borderRadius: '0.5rem' }}
+                            labelStyle={{ fontWeight: 'bold' }}
+                            formatter={(value: number) => [formatMinutes(value), 'الإنجاز']}
+                          />
+                          <ReferenceLine y={240} stroke="#10b981" strokeDasharray="3 3" />
+                          <Bar dataKey="minutes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <Separator className="my-4" />
+                  <div className="flex w-full justify-around">
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">الإنجاز الكلي</h3>
+                      <p className="text-lg font-bold">{formatMinutes(selectedUser.totalMinutes)}</p>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">إنجاز اليوم</h3>
+                      <p className="text-lg font-bold">{formatMinutes(selectedUser.todayMinutes)}</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </>
