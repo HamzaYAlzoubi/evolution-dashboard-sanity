@@ -238,7 +238,7 @@ export const OnboardingTour = () => {
   const [step, setStep] = useState(1);
 
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour_v1');
+    const hasSeenTour = hasSeenOnboardingTour_v2;
     if (!hasSeenTour) {
       setIsOpen(true);
     }
@@ -274,7 +274,7 @@ export const OnboardingTour = () => {
           <HelpCircle className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md p-6">
+      <DialogContent className="p-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
