@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Pencil } from "lucide-react";
+import { Heart, Pencil, Loader2 } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 
 // Helper function to format minutes into a readable string (e.g., "1,000h 25m")
@@ -85,12 +85,12 @@ const getUsersQuery = `*[_type == "user"] {
 
 const AchievementCampPage = () => {
   const { data: session } = useSession();
-  console.log("Session Object:", session);
   const [usersWithStats, setUsersWithStats] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalText, setGoalText] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -128,8 +128,9 @@ const AchievementCampPage = () => {
   }, []);
 
   const handleSaveGoal = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || isSaving) return;
 
+    setIsSaving(true);
     try {
       const response = await fetch('/api/user/update-profile', {
         method: 'POST',
@@ -155,6 +156,8 @@ const AchievementCampPage = () => {
     } catch (error) {
       console.error("Error saving goal:", error);
       // Optionally, add user-facing error feedback here
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -341,12 +344,14 @@ const AchievementCampPage = () => {
                                 rows={3}
                             />
                             <div className="flex gap-2 self-end">
-                                <Button onClick={handleSaveGoal} size="sm">حفظ</Button>
-                                <Button onClick={() => setIsEditingGoal(false)} variant="secondary" size="sm">إلغاء</Button>
+                                <Button onClick={handleSaveGoal} size="sm" disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ"}
+                                </Button>
+                                <Button onClick={() => setIsEditingGoal(false)} variant="secondary" size="sm" disabled={isSaving}>إلغاء</Button>
                             </div>
                         </div>
                     ) : (
-                        <blockquote className="text-center text-base font-semibold text-slate-700 dark:text-slate-200">
+                        <blockquote className="text-center text-base font-semibold text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
                             {selectedUser.campGoal ? `"${selectedUser.campGoal}"` : '"لم يتم تحديد هدف بعد"'}
                         </blockquote>
                     )}
