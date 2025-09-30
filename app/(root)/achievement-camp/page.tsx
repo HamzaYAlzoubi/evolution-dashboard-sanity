@@ -220,13 +220,24 @@ const AchievementCampPage = () => {
 
       <Dialog open={!!selectedUser} onOpenChange={(isOpen) => { if (!isOpen) setSelectedUser(null); }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedUser?.name || "تفاصيل المستخدم"}</DialogTitle>
-          </DialogHeader>
-          <div>
-            <p>سيتم عرض تفاصيل {selectedUser?.name} هنا.</p>
-            <p>إجمالي الدقائق: {selectedUser?.totalMinutes}</p>
-          </div>
+          {selectedUser && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-center">{selectedUser.name}</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-2 pt-4">
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{`تحدي المعسكر: ${Math.round(Math.min((selectedUser.todayMinutes / 240) * 100, 100))}%`}</p>
+                <ProgressRing progress={Math.min((selectedUser.todayMinutes / 240) * 100, 100)} size={80} strokeWidth={5}>
+                  <Avatar className="w-18 h-18 border-2 border-white">
+                    <AvatarImage src={selectedUser.image ? urlFor(selectedUser.image).width(100).url() : undefined} alt={selectedUser.name} />
+                    <AvatarFallback>{selectedUser.name ? selectedUser.name.charAt(0) : '?'}</AvatarFallback>
+                  </Avatar>
+                </ProgressRing>
+                <h2 className="pt-2 text-xl font-bold">{selectedUser.name}</h2>
+                <Badge className={`border text-xs ${getRankStyle(selectedUser.rankTitle)}`}>{selectedUser.rankTitle}</Badge>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
