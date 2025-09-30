@@ -102,8 +102,19 @@ export async function GET() {
       };
     });
 
+    // Define the type for our processed user
+    interface ProcessedUser {
+        _id: string;
+        name: string;
+        image: string | null;
+        lives: number;
+        isEliminated: boolean;
+        dailyProgress: { day: number; status: 'success' | 'fail' | 'pending' }[];
+        currentStreak: number;
+    }
+
     // Sort users by a meaningful metric, e.g., most lives, then highest streak
-    processedUsers.sort((a, b) => {
+    processedUsers.sort((a: ProcessedUser, b: ProcessedUser) => {
         if (a.lives !== b.lives) {
             return b.lives - a.lives;
         }
