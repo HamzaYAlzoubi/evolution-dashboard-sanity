@@ -26,6 +26,18 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { Badge } from "@/components/ui/badge";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 
+// Helper function to get style for ranks, copied from the main page for consistency
+const getRankStyle = (rankTitle: string) => {
+  switch (rankTitle) {
+    case "أمير المؤمنين": return "bg-yellow-200 text-yellow-800 border-yellow-300";
+    case "أمير": return "bg-red-200 text-red-800 border-red-300";
+    case "قائد": return "bg-purple-200 text-purple-800 border-purple-300";
+    case "فارس": return "bg-indigo-200 text-indigo-800 border-indigo-300";
+    case "مجتهد": return "bg-blue-200 text-blue-800 border-blue-300";
+    default: return "bg-gray-200 text-gray-800 border-gray-300"; // مبتدئ
+  }
+};
+
 // Self-contained component for the entirety of Step 2
 const StepTwoVisual = () => {
     const { data: session } = useSession();
@@ -74,7 +86,7 @@ const StepTwoVisual = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.4 }}
-                    className="flex flex-col items-center w-full"
+                    className="flex flex-col items-center justify-center w-full h-full"
                 >
                     <div className="flex flex-col items-center gap-2">
                         <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
@@ -88,6 +100,7 @@ const StepTwoVisual = () => {
                                 </AvatarFallback>
                             </Avatar>
                         </ProgressRing>
+                        <Badge className={`border text-xs ${getRankStyle("مبتدئ")}`}>مبتدئ</Badge>
                     </div>
                     <p className="text-center text-muted-foreground mt-4">
                         هذه الحلقة تمثل هدفك اليومي (4 ساعات). اكتمالها يعني نجاحك في تحدي اليوم.
@@ -99,7 +112,7 @@ const StepTwoVisual = () => {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4 }}
-                    className="flex flex-col items-center w-full"
+                    className="flex flex-col items-center justify-center w-full h-full"
                 >
                     <div className="h-32 w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -147,12 +160,31 @@ const tourSteps = [
     title: "ارتقِ في الرتب",
     content: "كلما زادت ساعات إنجازك الكلية، ارتفعت رتبتك.",
     visual: () => (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}><Badge variant="outline">مبتدئ</Badge></motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.4 } }}><Badge variant="outline">مجتهد</Badge></motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.6 } }}><Badge variant="outline">فارس</Badge></motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.8 } }}><Badge variant="outline">قائد</Badge></motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 1.0 } }}><Badge variant="outline">أمير</Badge></motion.div>
+        <div className="grid grid-cols-3 gap-x-2 gap-y-4 w-full max-w-xs mx-auto">
+            <div className="flex flex-col items-center gap-1">
+                <Badge className={`border text-xs ${getRankStyle("مبتدئ")}`}>مبتدئ</Badge>
+                <span className="text-xs text-muted-foreground">0+ ساعة</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Badge className={`border text-xs ${getRankStyle("مجتهد")}`}>مجتهد</Badge>
+                <span className="text-xs text-muted-foreground">50+ ساعة</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Badge className={`border text-xs ${getRankStyle("فارس")}`}>فارس</Badge>
+                <span className="text-xs text-muted-foreground">150+ ساعة</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Badge className={`border text-xs ${getRankStyle("قائد")}`}>قائد</Badge>
+                <span className="text-xs text-muted-foreground">300+ ساعة</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Badge className={`border text-xs ${getRankStyle("أمير")}`}>أمير</Badge>
+                <span className="text-xs text-muted-foreground">500+ ساعة</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Badge className={`border text-xs ${getRankStyle("أمير المؤمنين")}`}>أمير المؤمنين</Badge>
+                <span className="text-xs text-muted-foreground">1000+ ساعة</span>
+            </div>
         </div>
     ),
   },
@@ -243,12 +275,12 @@ export const OnboardingTour = () => {
               </DialogTitle>
             </DialogHeader>
 
-            <div className="min-h-[120px] flex items-center justify-center my-4">
+            <div className="min-h-[120px] flex items-center justify-center my-4 -mb-2.5">
               {currentStepContent.visual()}
             </div>
 
             {currentStepContent.content && (
-              <p className="text-center text-muted-foreground min-h-[60px]">
+              <p className="text-center text-muted-foreground mt-4">
                 {currentStepContent.content}
               </p>
             )}
