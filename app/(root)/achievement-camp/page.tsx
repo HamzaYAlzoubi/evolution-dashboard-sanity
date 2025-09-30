@@ -8,11 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { urlFor } from '@/sanity/lib/image';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Pencil, Loader2 } from "lucide-react";
+import { Heart, Pencil, Loader2, HelpCircle } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 
 // Helper function to format minutes into a readable string (e.g., "1,000h 25m")
@@ -179,7 +179,21 @@ const AchievementCampPage = () => {
   return (
     <>
       <div className="flex min-h-screen w-full flex-col items-center p-4 sm:p-8 md:p-12">
-        <h1 className="text-4xl font-bold my-6 text-center">لوحة صدارة الأبطال</h1>
+        <div className="flex items-center justify-center gap-4 my-6">
+          <h1 className="text-4xl font-bold text-center">لوحة صدارة الأبطال</h1>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>كيف تعمل لوحة الصدارة؟</DialogTitle>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        </div>
 
         {topThree.length >= 1 && (
           <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-3">
