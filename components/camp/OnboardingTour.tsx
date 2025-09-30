@@ -210,7 +210,7 @@ const tourSteps = [
         <div className="flex items-center justify-center gap-4">
             <motion.div initial={{ scale: 1 }} animate={{ scale: 1 }}><Heart size={40} className="fill-red-500 stroke-red-600" /></motion.div>
             <motion.div initial={{ scale: 1 }} animate={{ scale: 1 }}><Heart size={40} className="fill-red-500 stroke-red-600" /></motion.div>
-            <motion.div initial={{ scale: 1 }} animate={{ scale: 0.9, transition: { delay: 1, yoyo: Infinity } }}><Heart size={40} className="fill-slate-300 stroke-slate-400" /></motion.div>
+            <motion.div initial={{ scale: 1 }} animate={{ scale: [1, 0.9, 1], transition: { delay: 1, repeat: Infinity, repeatType: "reverse", duration: 1 } }}><Heart size={40} className="fill-slate-300 stroke-slate-400" /></motion.div>
         </div>
     ),
   },
