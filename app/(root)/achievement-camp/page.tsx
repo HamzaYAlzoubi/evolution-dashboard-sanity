@@ -287,11 +287,39 @@ const AchievementCampPage = () => {
                   <div className="mt-4 w-full">
                     <h3 className="mb-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">الفرص المتبقية</h3>
                     <div className="flex justify-center gap-4">
-                      {Array.from({ length: 3 }).map((_, index) => {
-                        const livesLost = 1; // Placeholder
-                        const isLost = index < livesLost;
-                        return <Heart key={index} className={`h-8 w-8 transition-all ${isLost ? 'fill-slate-300 stroke-slate-400 dark:fill-slate-700 dark:stroke-slate-500' : 'fill-red-500 stroke-red-600'}`} />;
-                      })}
+                      {(() => {
+                        const today = new Date();
+                        const currentMonth = today.getMonth();
+                        const currentYear = today.getFullYear();
+                        const daysInMonthSoFar = today.getDate();
+                        const dailyTarget = 240; // 4 hours in minutes
+
+                        const sessionsByDay = new Map<number, number>();
+
+                        selectedUser.sessions?.forEach(s => {
+                          if (!s) return;
+                          const sessionDate = new Date(s.date);
+                          if (sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear) {
+                            const dayOfMonth = sessionDate.getDate();
+                            const totalMinutes = (s.hours || 0) * 60 + (s.minutes || 0);
+                            sessionsByDay.set(dayOfMonth, (sessionsByDay.get(dayOfMonth) || 0) + totalMinutes);
+                          }
+                        });
+
+                        let livesLost = 0;
+                        // We check failures for past days only, not today.
+                        for (let day = 1; day < daysInMonthSoFar; day++) {
+                          const achievedMinutes = sessionsByDay.get(day) || 0;
+                          if (achievedMinutes < dailyTarget) {
+                            livesLost++;
+                          }
+                        }
+
+                        return Array.from({ length: 3 }).map((_, index) => {
+                          const isLost = index < livesLost;
+                          return <Heart key={index} className={`h-8 w-8 transition-all ${isLost ? 'fill-slate-300 stroke-slate-400 dark:fill-slate-700 dark:stroke-slate-500' : 'fill-red-500 stroke-red-600'}`} />;
+                        });
+                      })()}
                     </div>
                   </div>
 
