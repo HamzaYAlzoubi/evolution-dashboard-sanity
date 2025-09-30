@@ -273,25 +273,39 @@ const AchievementCampPage = () => {
           {selectedUser && (() => {
             // Data processing for the chart
             const processChartData = (sessions: typeof selectedUser.sessions) => {
-              const sessionMap = new Map<string, number>();
-              sessions?.forEach(s => {
-                if (!s) return;
-                const date = s.date.split('T')[0];
-                const totalMinutes = (s.hours || 0) * 60 + (s.minutes || 0);
-                sessionMap.set(date, (sessionMap.get(date) || 0) + totalMinutes);
+              const now = new Date();
+              const currentYear = now.getFullYear();
+              const currentMonth = now.getMonth();
+              const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+              // 1. Create a template for all days of the current month
+              const monthData = Array.from({ length: daysInMonth }, (_, i) => {
+                const dayNumber = i + 1;
+                return {
+                  name: String(dayNumber), // X-axis label
+                  minutes: 0,
+                };
               });
 
-              const data = [];
-              for (let i = 29; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateString = date.toISOString().split('T')[0];
-                data.push({
-                  name: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                  minutes: sessionMap.get(dateString) || 0,
+              // 2. Populate the template with the user's actual session data
+              if (sessions) {
+                sessions.forEach(session => {
+                  if (!session || !session.date) return;
+                  
+                  const sessionDate = new Date(session.date);
+                  if (sessionDate.getFullYear() === currentYear && sessionDate.getMonth() === currentMonth) {
+                    const dayOfMonth = sessionDate.getDate(); // 1-based day
+                    const totalMinutes = (Number(session.hours) || 0) * 60 + (Number(session.minutes) || 0);
+                    
+                    // Update the corresponding day in our template array
+                    if (monthData[dayOfMonth - 1]) {
+                      monthData[dayOfMonth - 1].minutes += totalMinutes;
+                    }
+                  }
                 });
               }
-              return data;
+              
+              return monthData;
             };
             const chartData = processChartData(selectedUser.sessions);
 
@@ -401,9 +415,9 @@ const AchievementCampPage = () => {
                     <h3 className="mb-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">النشاط اليومي (آخر 30 يومًا)</h3>
                     <div className="h-48 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                        <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                           <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} unit="m" />
+                          <YAxis dx={-15} stroke="#888888" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `${Math.floor(value / 60)}h`} />
                           <ChartTooltip
                             cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
                             contentStyle={{ backgroundColor: '#ffffffaa', border: '1px solid #ccc', borderRadius: '0.5rem' }}
