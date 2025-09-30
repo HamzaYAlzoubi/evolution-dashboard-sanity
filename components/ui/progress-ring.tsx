@@ -7,6 +7,7 @@ interface ProgressRingProps {
   size?: number;
   strokeWidth?: number;
   children?: React.ReactNode;
+  disableTransition?: boolean;
 }
 
 export const ProgressRing: React.FC<ProgressRingProps> = ({
