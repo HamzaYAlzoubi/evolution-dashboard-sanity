@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -9,48 +10,168 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { HelpCircle } from "lucide-react";
+import {
+  HelpCircle,
+  Target,
+  CalendarDays,
+  Clock,
+  Smartphone,
+  Award,
+  Heart,
+  Pencil,
+} from "lucide-react";
+import { ProgressRing } from "@/components/ui/progress-ring";
+import { Badge } from "@/components/ui/badge";
 
-const TOTAL_STEPS = 6; // 5 steps for explanation + 1 for final message
+const ProgressRingVisual = () => {
+    const [progress, setProgress] = useState(0);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setProgress(prev => (prev >= 100 ? 0 : prev + 10));
+        }, 500);
+        return () => clearInterval(interval);
+    }, []);
+    return <ProgressRing progress={progress} size={100} strokeWidth={8} />;
+};
+
+const tourSteps = [
+  {
+    title: "مرحبًا بك في معسكر الأبطال!",
+    content: "تحدٍ لمدة شهر لتحقيق هدف واحد كبير. الالتزام: 4 ساعات يوميًا، بدون مشتتات.",
+    visual: () => (
+      <div className="flex items-center justify-center gap-4 text-gray-600 dark:text-gray-400">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.2 } }}><Target size={32} /></motion.div>
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.4 } }}><CalendarDays size={32} /></motion.div>
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.6 } }}><Clock size={32} /></motion.div>
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.8 } }}><Smartphone size={32} /></motion.div>
+      </div>
+    ),
+  },
+  {
+    title: "تحدي الـ 4 ساعات اليومي",
+    content: "هذه الحلقة تتبع إنجازك اليومي. أكملها كل يوم لتنجح.",
+    visual: () => <ProgressRingVisual />,
+  },
+  {
+    title: "ارتقِ في الرتب",
+    content: "كلما زادت ساعات إنجازك الكلية، ارتفعت رتبتك.",
+    visual: () => (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}><Badge variant="outline">مبتدئ</Badge></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.4 } }}><Badge variant="outline">مجتهد</Badge></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.6 } }}><Badge variant="outline">فارس</Badge></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.8 } }}><Badge variant="outline">قائد</Badge></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, transition: { delay: 1.0 } }}><Badge variant="outline">أمير</Badge></motion.div>
+        </div>
+    ),
+  },
+  {
+    title: "انتبه! لديك 3 فرص فقط",
+    content: "لكل يوم تفشل فيه، ستخسر قلبًا. إذا خسرت كل قلوبك، تخرج من المنافسة.",
+    visual: () => (
+        <div className="flex items-center justify-center gap-4">
+            <motion.div initial={{ scale: 1 }} animate={{ scale: 1 }}><Heart size={40} className="fill-red-500 stroke-red-600" /></motion.div>
+            <motion.div initial={{ scale: 1 }} animate={{ scale: 1 }}><Heart size={40} className="fill-red-500 stroke-red-600" /></motion.div>
+            <motion.div initial={{ scale: 1 }} animate={{ scale: 0.9, transition: { delay: 1, yoyo: Infinity } }}><Heart size={40} className="fill-slate-300 stroke-slate-400" /></motion.div>
+        </div>
+    ),
+  },
+  {
+    title: "حدد هدفك",
+    content: "يمكنك تعديل هدفك في أي وقت من نافذة التفاصيل الخاصة بك.",
+    visual: () => (
+        <div className="flex items-center justify-center gap-2 p-4 border rounded-lg">
+            <p className="text-sm text-muted-foreground">هدفي هو...</p>
+            <Pencil size={20} />
+        </div>
+    ),
+  },
+  {
+    title: "هل أنت مستعد؟",
+    content: "المعسكر بدأ. بالتوفيق أيها البطل!",
+    visual: () => <Target size={60} className="stroke-primary" />,
+  },
+];
+
+const TOTAL_STEPS = tourSteps.length;
 
 export const OnboardingTour = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
 
-  const handleNext = () => {
-    setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
-  };
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour_v1');
+    if (!hasSeenTour) {
+      setIsOpen(true);
+    }
+  }, []);
 
-  const handlePrev = () => {
-    setStep((prev) => Math.max(prev - 1, 1));
-  };
+  const handleNext = () => setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+  const handlePrev = () => setStep((prev) => Math.max(prev - 1, 1));
+  
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+        // If dialog is closed for any reason, mark tour as seen
+        localStorage.setItem('hasSeenOnboardingTour_v1', 'true');
+    }
+    setIsOpen(open);
+    // Reset step count when dialog is closed
+    if (!open) {
+        setTimeout(() => setStep(1), 300);
+    }
+  }
+
+  const handleFinalButtonClick = () => {
+    localStorage.setItem('hasSeenOnboardingTour_v1', 'true');
+    setIsOpen(false);
+    setTimeout(() => setStep(1), 300);
+  }
+
+  const currentStepContent = tourSteps[step - 1];
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" className="rounded-full">
           <HelpCircle className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center">جولة تعريفية في معسكر الأبطال</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-md p-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col"
+          >
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl font-bold mb-2">
+                {currentStepContent.title}
+              </DialogTitle>
+            </DialogHeader>
 
-        {/* Step Content will go here */}
-        <div className="min-h-[200px] flex items-center justify-center p-4">
-          <p>المحتوى للخطوة {step} سيظهر هنا.</p>
-        </div>
+            <div className="min-h-[120px] flex items-center justify-center my-4">
+              {currentStepContent.visual()}
+            </div>
+
+            <p className="text-center text-muted-foreground min-h-[60px]">
+              {currentStepContent.content}
+            </p>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Navigation and Progress Dots */}
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-6">
           <div>
             {step > 1 && (
-                <Button variant="outline" onClick={handlePrev}>
-                    السابق
-                </Button>
+              <Button variant="ghost" onClick={handlePrev}>
+                السابق
+              </Button>
             )}
           </div>
-          
+
           <div className="flex gap-2">
             {Array.from({ length: TOTAL_STEPS }).map((_, index) => (
               <div
@@ -64,11 +185,9 @@ export const OnboardingTour = () => {
 
           <div>
             {step < TOTAL_STEPS ? (
-                <Button onClick={handleNext}>
-                    التالي
-                </Button>
+              <Button onClick={handleNext}>التالي</Button>
             ) : (
-                <Button>هيا نبدأ!</Button> // Final button
+              <Button onClick={handleFinalButtonClick}>هيا نبدأ!</Button>
             )}
           </div>
         </div>

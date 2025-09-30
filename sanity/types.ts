@@ -84,6 +84,7 @@ export type User = {
   _updatedAt: string;
   _rev: string;
   name?: string;
+  campGoal?: string;
   email?: string;
   image?: {
     asset?: {
