@@ -3,16 +3,19 @@ import { writeClient } from '@/sanity/lib/write-client';
 
 export async function POST(request: Request) {
   try {
-    const { userId, name, image } = await request.json();
-    console.log('API received - userId:', userId, 'name:', name, 'image:', image);
+    const { userId, name, image, campGoal } = await request.json();
+    console.log('API received - userId:', userId, 'name:', name, 'image:', image, 'campGoal:', campGoal);
 
     if (!userId) {
       return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
     }
 
-    const patchOperations: { name?: string; image?: any } = {};
+    const patchOperations: { name?: string; image?: any, campGoal?: string } = {};
     if (name !== undefined) {
       patchOperations.name = name;
+    }
+    if (campGoal !== undefined) {
+      patchOperations.campGoal = campGoal;
     }
     if (image && image._ref) {
       patchOperations.image = {

@@ -9,6 +9,12 @@ export default {
       type: "string",
     },
     {
+      name: "campGoal",
+      title: "هدف المعسكر",
+      type: "string",
+      description: "الهدف الذي يسعى المستخدم لتحقيقه خلال المعسكر",
+    },
+    {
       name: "email",
       title: "Email",
       type: "string",

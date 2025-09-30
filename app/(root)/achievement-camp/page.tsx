@@ -8,8 +8,10 @@ import { urlFor } from '@/sanity/lib/image';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart } from "lucide-react";
+import { Heart, Pencil } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 
 // Helper function to format minutes into a readable string (e.g., "1,000h 25m")
@@ -53,6 +55,7 @@ const getRank = (totalMinutes: number) => {
 interface User {
   _id: string;
   name: string;
+  campGoal?: string;
   image?: any;
   sessions?: {
     date: string;
@@ -70,6 +73,7 @@ interface UserWithStats extends User {
 const getUsersQuery = `*[_type == "user"] {
   _id,
   name,
+  campGoal,
   image,
   "sessions": sessions[]->{
     date,
@@ -82,6 +86,8 @@ const AchievementCampPage = () => {
   const [usersWithStats, setUsersWithStats] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [goalText, setGoalText] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -117,6 +123,37 @@ const AchievementCampPage = () => {
 
     fetchUsers();
   }, []);
+
+  const handleSaveGoal = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const response = await fetch('/api/user/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUser._id, campGoal: goalText }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save goal');
+      }
+
+      const updatedUserData = await response.json();
+
+      // Optimistic update for the selected user in the dialog
+      setSelectedUser(prev => prev ? { ...prev, campGoal: goalText } : null);
+
+      // Update the main users list to reflect the change immediately
+      setUsersWithStats(prevUsers =>
+        prevUsers.map(u => (u._id === selectedUser._id ? { ...u, campGoal: goalText } : u))
+      );
+
+      setIsEditingGoal(false);
+    } catch (error) {
+      console.error("Error saving goal:", error);
+      // Optionally, add user-facing error feedback here
+    }
+  };
 
   if (loading) {
     return <div className="flex min-h-screen w-full flex-col items-center justify-center"><p>تحميل الأبطال...</p></div>;
@@ -220,7 +257,12 @@ const AchievementCampPage = () => {
         </div>
       </div>
 
-      <Dialog open={!!selectedUser} onOpenChange={(isOpen) => { if (!isOpen) setSelectedUser(null); }}>
+      <Dialog open={!!selectedUser} onOpenChange={(isOpen) => { 
+        if (!isOpen) {
+          setSelectedUser(null); 
+          setIsEditingGoal(false);
+        }
+      }}>
         <DialogContent>
           {selectedUser && (() => {
             // Data processing for the chart
@@ -278,10 +320,33 @@ const AchievementCampPage = () => {
                   <Separator className="my-4 w-1/2" />
 
                   <div className="mt-2 w-full rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
-                    <h3 className="mb-2 text-center text-sm font-medium text-slate-500 dark:text-slate-400">هدف المعسكر</h3>
-                    <blockquote className="text-center text-base font-semibold text-slate-700 dark:text-slate-200">
-                      "بناء 5 متاجر إلكترونية قوية ومتكاملة خلال فترة المعسكر."
-                    </blockquote>
+                    <div className="flex items-center justify-center mb-2">
+                        <h3 className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">هدف المعسكر</h3>
+                        {!isEditingGoal && (
+                            <button onClick={() => { setIsEditingGoal(true); setGoalText(selectedUser.campGoal || ''); }} className="ml-2 p-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                                <Pencil size={14} />
+                            </button>
+                        )}
+                    </div>
+                    {isEditingGoal ? (
+                        <div className="flex flex-col items-center gap-2 w-full">
+                            <Textarea
+                                value={goalText}
+                                onChange={(e) => setGoalText(e.target.value)}
+                                placeholder="اكتب هدفك هنا..."
+                                className="w-full text-sm"
+                                rows={3}
+                            />
+                            <div className="flex gap-2 self-end">
+                                <Button onClick={handleSaveGoal} size="sm">حفظ</Button>
+                                <Button onClick={() => setIsEditingGoal(false)} variant="secondary" size="sm">إلغاء</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <blockquote className="text-center text-base font-semibold text-slate-700 dark:text-slate-200">
+                            {selectedUser.campGoal ? `"${selectedUser.campGoal}"` : '"لم يتم تحديد هدف بعد"'}
+                        </blockquote>
+                    )}
                   </div>
 
                   <div className="mt-4 w-full">
