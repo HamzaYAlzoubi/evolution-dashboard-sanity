@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { motion, AnimatePresence, animate } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -24,20 +26,39 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { Badge } from "@/components/ui/badge";
 
 const ProgressRingVisual = () => {
+    const { data: session } = useSession();
     const [progress, setProgress] = useState(0);
     useEffect(() => {
-        const interval = setInterval(() => {
-            setProgress(prev => (prev >= 100 ? 0 : prev + 10));
-        }, 500);
-        return () => clearInterval(interval);
+        const controls = animate(0, 100, {
+            duration: 2.5,
+            ease: "linear",
+            onUpdate: (value) => {
+                setProgress(value);
+            },
+        });
+        return () => controls.stop();
     }, []);
-    return <ProgressRing progress={progress} size={100} strokeWidth={8} />;
+    return (
+        <div className="flex flex-col items-center gap-2">
+            <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                تحدي المعسكر: {Math.round(progress)}%
+            </p>
+            <ProgressRing progress={progress} size={100} strokeWidth={8} disableTransition>
+                <Avatar className="h-20 w-20">
+                    <AvatarImage src={session?.user?.image ?? undefined} />
+                    <AvatarFallback>
+                        {session?.user?.name?.charAt(0) ?? '?'}
+                    </AvatarFallback>
+                </Avatar>
+            </ProgressRing>
+        </div>
+    );
 };
 
 const tourSteps = [
   {
     title: "مرحبًا بك في معسكر الأبطال!",
-    content: "تحدٍ لمدة شهر لتحقيق هدف واحد كبير. الالتزام: 4 ساعات يوميًا، بدون مشتتات.",
+    content: "معسكر الإنجاز هو تحدٍ لمدة شهر لتحقيق هدف واحد كبير. للنجاح، عليك الالتزام بحد أدنى 4 ساعات من العمل المركز يوميًا. من شروط المعسكر الأساسية التخلص من جميع المشتتات طوال فترة التحدي.",
     visual: () => (
       <div className="flex items-center justify-center gap-4 text-gray-600 dark:text-gray-400">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.2 } }}><Target size={32} /></motion.div>
@@ -49,7 +70,7 @@ const tourSteps = [
   },
   {
     title: "تحدي الـ 4 ساعات اليومي",
-    content: "هذه الحلقة تتبع إنجازك اليومي. أكملها كل يوم لتنجح.",
+    content: "هذه الحلقة تمثل هدفك اليومي (4 ساعات). اكتمالها يعني نجاحك في تحدي اليوم.",
     visual: () => <ProgressRingVisual />,
   },
   {

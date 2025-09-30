@@ -14,6 +14,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
   size = 88, // Default size for podium
   strokeWidth = 4,
   children,
+  disableTransition,
 }) => {
   const normalizedRadius = (size - strokeWidth) / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
@@ -23,6 +24,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
 
   // Determine color based on completion
   const progressColor = isCompleted ? 'stroke-green-500' : 'stroke-blue-500';
+  const transitionClass = disableTransition ? '' : 'transition-all duration-300 ease-in-out';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -43,7 +45,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
         />
         {/* Progress Circle */}
         <circle
-          className={`transition-all duration-300 ease-in-out ${progressColor}`}
+          className={`${transitionClass} ${progressColor}`}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
