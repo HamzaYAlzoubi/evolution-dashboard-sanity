@@ -168,7 +168,7 @@ const tourSteps = [
                 <div className="shadow-[0_0_15px_rgba(252,211,77,0.7)] rounded-lg">
                     <Badge className={`border text-xs ${getRankStyle("أمير المؤمنين")}`}>أمير المؤمنين</Badge>
                 </div>
-                <span className="text-xs text-muted-foreground mt-1">1000+ ساعة</span>
+                <span className="text-xs text-muted-foreground mt-1">لقب فريد</span>
             </div>
 
             <hr className="w-1/2 border-gray-300 dark:border-gray-700" />
@@ -290,7 +290,7 @@ export const OnboardingTour = () => {
               </DialogTitle>
             </DialogHeader>
 
-            <div className="min-h-[120px] flex items-center justify-center my-4 -mb-2.5">
+            <div className="min-h-[120px] flex items-center justify-center my-4">
               {currentStepContent.visual()}
             </div>
 
