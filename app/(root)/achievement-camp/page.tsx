@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { sanityClient } from '@/sanity/lib/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -83,6 +84,8 @@ const getUsersQuery = `*[_type == "user"] {
 }`;
 
 const AchievementCampPage = () => {
+  const { data: session } = useSession();
+  console.log("Session Object:", session);
   const [usersWithStats, setUsersWithStats] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
@@ -322,7 +325,7 @@ const AchievementCampPage = () => {
                   <div className="mt-2 w-full rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
                     <div className="flex items-center justify-center mb-2">
                         <h3 className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">هدف المعسكر</h3>
-                        {!isEditingGoal && (
+                        {!isEditingGoal && session?.user?.id === selectedUser?._id && (
                             <button onClick={() => { setIsEditingGoal(true); setGoalText(selectedUser.campGoal || ''); }} className="ml-2 p-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
                                 <Pencil size={14} />
                             </button>
