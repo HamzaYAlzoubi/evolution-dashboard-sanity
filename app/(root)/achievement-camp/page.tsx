@@ -149,7 +149,7 @@ const AchievementCampPage = () => {
               const ringStrokeWidth = orderIndex === 0 ? 5 : 4;
 
               return (
-                <div key={user._id} className={`transform transition-transform duration-300 ${style.scale} w-1/3 max-w-[180px] cursor-pointer`} onClick={() => setSelectedUser(user)}>
+                <div key={user._id} className={`transform transition-all duration-300 ${style.scale} w-1/3 max-w-[180px] cursor-pointer hover:-translate-y-3`} onClick={() => setSelectedUser(user)}>
                   <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor}`}>
                     <CardHeader className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4">
                       <span className="text-3xl sm:text-4xl">{style.icon}</span>
@@ -186,8 +186,7 @@ const AchievementCampPage = () => {
           {restOfUsers.map((user, index) => {
             const rank = index + 4;
             return (
-              <div key={user._id} className="cursor-pointer" onClick={() => setSelectedUser(user)}>
-                <Card className="w-full flex flex-col p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+              <div key={user._id} className="cursor-pointer transition-transform duration-300 hover:-translate-y-2 hover:scale-[1.03]" onClick={() => setSelectedUser(user)}>                <Card className="w-full flex flex-col p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                     <div className="flex items-center gap-4">
                         <span className="text-xl font-bold text-gray-500">#{rank}</span>
                         <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={56} strokeWidth={4}>
@@ -264,7 +263,21 @@ const AchievementCampPage = () => {
                   <h2 className="pt-2 text-xl font-bold">{selectedUser.name}</h2>
                   <Badge className={`border text-xs ${getRankStyle(selectedUser.rankTitle)}`}>{selectedUser.rankTitle}</Badge>
 
-                  <div className="mt-6 w-full rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
+                  {/* Stats moved here */}
+                  <div className="flex w-full justify-center gap-8 mt-4">
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">الإنجاز الكلي</h3>
+                      <p className="text-lg font-bold">{formatMinutes(selectedUser.totalMinutes)}</p>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">إنجاز اليوم</h3>
+                      <p className="text-lg font-bold">{formatMinutes(selectedUser.todayMinutes)}</p>
+                    </div>
+                  </div>
+
+                  <Separator className="my-4 w-1/2" />
+
+                  <div className="mt-2 w-full rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
                     <h3 className="mb-2 text-center text-sm font-medium text-slate-500 dark:text-slate-400">هدف المعسكر</h3>
                     <blockquote className="text-center text-base font-semibold text-slate-700 dark:text-slate-200">
                       "بناء 5 متاجر إلكترونية قوية ومتكاملة خلال فترة المعسكر."
@@ -300,18 +313,6 @@ const AchievementCampPage = () => {
                           <Bar dataKey="minutes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  <Separator className="my-4" />
-                  <div className="flex w-full justify-around">
-                    <div className="text-center">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">الإنجاز الكلي</h3>
-                      <p className="text-lg font-bold">{formatMinutes(selectedUser.totalMinutes)}</p>
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">إنجاز اليوم</h3>
-                      <p className="text-lg font-bold">{formatMinutes(selectedUser.todayMinutes)}</p>
                     </div>
                   </div>
                 </div>
