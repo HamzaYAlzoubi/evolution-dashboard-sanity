@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Pencil, Loader2, Trophy } from "lucide-react";
+import { Heart, Pencil, Loader2, Trophy, Users } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { OnboardingTour } from "@/components/camp/OnboardingTour";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
@@ -589,10 +589,75 @@ const AchievementCampPage = () => {
                   <Accordion type="single" collapsible className="w-full">
                     {pastSeasons.map((season) => (
                       <AccordionItem value={season._id} key={season._id}>
-                        <AccordionTrigger>{season.name}</AccordionTrigger>
-                        <AccordionContent>
-                          {/* Details will go here in the next module */}
-                          <p>تفاصيل {season.name}...</p>
+                                                <AccordionTrigger className="text-lg hover:no-underline">
+                          <div className="flex-grow text-right font-semibold">{season.name}</div>
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                            {/* Champion Stat */}
+                            {season.champion && (
+                              <div className="flex items-center gap-2">
+                                <Trophy className="h-4 w-4 text-amber-500" />
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={season.champion.image ? urlFor(season.champion.image).width(24).url() : undefined} />
+                                  <AvatarFallback>{season.champion.name?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{season.champion.name}</span>
+                              </div>
+                            )}
+                            {/* Survivors Stat */}
+                            {season.survivors && season.survivors.length > 0 && (
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                <span className="font-medium">{season.survivors.length}</span>
+                              </div>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                          {/* Champion Section */}
+                          {season.champion && (
+                            <div>
+                              <h3 className="mb-2 text-sm font-medium text-amber-500">بطل الموسم</h3>
+                              <div 
+                                className="flex items-center gap-3 rounded-md bg-amber-50 p-3 dark:bg-amber-900/20 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                                onClick={() => {
+                                  const userToSelect = usersWithStats.find(u => u._id === season.champion._id);
+                                  if (userToSelect) setSelectedUser(userToSelect);
+                                }}
+                              >
+                                <Trophy className="h-6 w-6 text-amber-500" />
+                                <Avatar>
+                                  <AvatarImage src={season.champion.image ? urlFor(season.champion.image).width(80).url() : undefined} alt={season.champion.name} />
+                                  <AvatarFallback>{season.champion.name ? season.champion.name.charAt(0) : '?'}</AvatarFallback>
+                                </Avatar>
+                                <p className="font-semibold">{season.champion.name}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Survivors Section */}
+                          {season.survivors && season.survivors.length > 0 && (
+                            <div>
+                              <h3 className="mb-2 text-sm font-medium text-green-600">الناجون</h3>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                {season.survivors.map((survivor) => (
+                                  <div 
+                                    key={survivor._id} 
+                                    className="flex flex-col items-center text-center gap-2 cursor-pointer p-2 rounded-md hover:bg-accent transition-colors"
+                                    onClick={() => {
+                                      const userToSelect = usersWithStats.find(u => u._id === survivor._id);
+                                      if (userToSelect) setSelectedUser(userToSelect);
+                                    }}
+                                  >
+                                    <Avatar>
+                                      <AvatarImage src={survivor.image ? urlFor(survivor.image).width(80).url() : undefined} alt={survivor.name} />
+                                      <AvatarFallback>{survivor.name ? survivor.name.charAt(0) : '?'}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="text-xs font-medium truncate w-full">{survivor.name}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </AccordionContent>
                       </AccordionItem>
                     ))}
