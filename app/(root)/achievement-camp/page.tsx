@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Heart, Pencil, Loader2 } from "lucide-react";
 import { OnboardingTour } from "@/components/camp/OnboardingTour";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
+import { motion, LayoutGroup } from "framer-motion";
 
 // Helper function to format minutes into a readable string (e.g., "1,000h 25m")
 const formatMinutes = (totalMinutes: number) => {
@@ -100,6 +101,7 @@ const AchievementCampPage = () => {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalText, setGoalText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [sortBy, setSortBy] = useState<'total' | 'today'>('total');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -182,8 +184,22 @@ const AchievementCampPage = () => {
     return <div className="flex min-h-screen w-full flex-col items-center justify-center"><p>تحميل الأبطال...</p></div>;
   }
 
-  const topThree = usersWithStats.slice(0, 3);
-  const restOfUsers = usersWithStats.slice(3);
+  // Sort users based on the toggle, but keep the original ranks
+  const sortedUsers = [...usersWithStats].sort((a, b) => {
+    if (sortBy === 'today') {
+      // Primary sort: today's minutes
+      if (b.todayMinutes !== a.todayMinutes) {
+        return b.todayMinutes - a.todayMinutes;
+      }
+      // Secondary sort: total minutes as a tie-breaker
+      return b.totalMinutes - a.totalMinutes;
+    }
+    // Default 'total' sort is already handled by the initial fetch, but we sort again for consistency.
+    return b.totalMinutes - a.totalMinutes;
+  });
+
+  const topThree = sortedUsers.slice(0, 3);
+  const restOfUsers = sortedUsers.slice(3);
 
   const podiumStyles = [
     { borderColor: 'border-yellow-400', bgColor: 'bg-yellow-50/50', icon: '🥇', scale: 'scale-110' }, // Gold
@@ -199,6 +215,34 @@ const AchievementCampPage = () => {
         <div className="flex items-center justify-center gap-4 my-6">
           <h1 className="text-4xl font-bold text-center">لوحة صدارة الأبطال</h1>
           <OnboardingTour />
+        </div>
+
+        {/* Sort By Toggle */}
+        <div className="my-8">
+          <LayoutGroup>
+            <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
+              {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSortBy(tab.id as 'total' | 'today')}
+                  className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-colors z-10 ${
+                    sortBy === tab.id
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'
+                  }`}
+                >
+                  {sortBy === tab.id && (
+                    <motion.div
+                      layoutId="active-pill"
+                      className="absolute inset-0 bg-white dark:bg-gray-900 rounded-full shadow"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </LayoutGroup>
         </div>
 
         {topThree.length >= 1 && (
