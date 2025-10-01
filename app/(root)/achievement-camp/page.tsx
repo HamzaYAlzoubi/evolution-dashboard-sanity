@@ -131,7 +131,7 @@ const AchievementCampPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [users, seasons] = await Promise.all([
+      const [users, seasons]: [User[], Season[]] = await Promise.all([
         sanityClient.fetch(getUsersQuery),
         sanityClient.fetch(seasonsQuery)
       ]);
