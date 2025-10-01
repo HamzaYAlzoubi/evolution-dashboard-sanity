@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Heart, Pencil, Loader2, Trophy } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { OnboardingTour } from "@/components/camp/OnboardingTour";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 import { motion, LayoutGroup } from "framer-motion";
@@ -63,11 +64,18 @@ const getRank = (totalMinutes: number, rankIndex: number) => {
   return "مبتدئ";
 };
 
+interface Award {
+  seasonName: string;
+  awardType: 'survivor' | 'champion';
+  awardedDate: string;
+}
+
 interface User {
   _id: string;
   name: string;
   campGoal?: string;
   image?: any;
+  awards?: Award[];
   sessions?: {
     date: string;
     hours: number;
@@ -79,6 +87,13 @@ interface UserWithStats extends User {
   totalMinutes: number;
   todayMinutes: number;
   rankTitle: string;
+}
+
+interface Season {
+  _id: string;
+  name: string;
+  champion: { _id: string; name: string; image: any };
+  survivors: { _id: string; name: string; image: any }[];
 }
 
 const getUsersQuery = `*[_type == "user"] {
@@ -93,6 +108,13 @@ const getUsersQuery = `*[_type == "user"] {
   }
 }`;
 
+const seasonsQuery = `*[_type == "season"] | order(startDate desc) {
+  _id,
+  name,
+  champion->{_id, name, image},
+  survivors[]->{_id, name, image}
+}`;
+
 const AchievementCampPage = () => {
   const { data: session } = useSession();
   const [usersWithStats, setUsersWithStats] = useState<UserWithStats[]>([]);
@@ -104,14 +126,19 @@ const AchievementCampPage = () => {
   const [sortBy, setSortBy] = useState<'total' | 'today'>('total');
   const [seasonsDialogOpen, setSeasonsDialogOpen] = useState(false);
   const [seasonsView, setSeasonsView] = useState<'current' | 'past'>('current');
+  const [pastSeasons, setPastSeasons] = useState<Season[]>([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const users: User[] = await sanityClient.fetch(getUsersQuery);
+      const [users, seasons] = await Promise.all([
+        sanityClient.fetch(getUsersQuery),
+        sanityClient.fetch(seasonsQuery)
+      ]);
+
       const today = new Date().toISOString().split('T')[0];
 
-      // Step 1: Process minutes for each user
+      // Process users
       const usersWithMinutes = users.map(user => {
         const totalMinutes = user.sessions?.reduce((acc, s) => {
           if (!s) return acc;
@@ -132,20 +159,19 @@ const AchievementCampPage = () => {
         return { ...user, totalMinutes, todayMinutes };
       });
 
-      // Step 2: Sort users by total minutes to establish ranks
       usersWithMinutes.sort((a, b) => b.totalMinutes - a.totalMinutes);
 
-      // Step 3: Assign rank titles based on sorted position
       const finalUsersWithStats = usersWithMinutes.map((user, index) => {
         const rankTitle = getRank(user.totalMinutes, index);
         return { ...user, rankTitle };
       });
 
       setUsersWithStats(finalUsersWithStats);
+      setPastSeasons(seasons || []);
       setLoading(false);
     };
 
-    fetchUsers();
+    fetchData();
 
     const savedSortBy = localStorage.getItem('leaderboardSortBy');
     if (savedSortBy === 'total' || savedSortBy === 'today') {
@@ -547,13 +573,32 @@ const AchievementCampPage = () => {
               </div>
             </LayoutGroup>
           </div>
-          <div className="flex-grow overflow-y-auto no-scrollbar">
-            {/* Content will go here */}
+          <div className="flex-grow overflow-y-auto no-scrollbar pr-4">
             {seasonsView === 'current' && (
-              <p>محتوى الموسم الحالي...</p>
+              <div className="text-center text-muted-foreground pt-10">
+                <p>سيتم بناء واجهة الموسم الحالي قريبًا...</p>
+              </div>
             )}
             {seasonsView === 'past' && (
-              <p>محتوى المواسم السابقة...</p>
+              <div>
+                {pastSeasons.length === 0 ? (
+                  <div className="text-center text-muted-foreground pt-10">
+                    <p>لا توجد مواسم سابقة مسجلة حتى الآن.</p>
+                  </div>
+                ) : (
+                  <Accordion type="single" collapsible className="w-full">
+                    {pastSeasons.map((season) => (
+                      <AccordionItem value={season._id} key={season._id}>
+                        <AccordionTrigger>{season.name}</AccordionTrigger>
+                        <AccordionContent>
+                          {/* Details will go here in the next module */}
+                          <p>تفاصيل {season.name}...</p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </div>
             )}
           </div>
         </DialogContent>
