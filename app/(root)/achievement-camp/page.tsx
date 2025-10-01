@@ -319,7 +319,7 @@ const AchievementCampPage = () => {
         ) : (
           <>
             {/* Sort By Toggle */}
-            <div className="mb-8 flex justify-center items-center gap-4">
+            <div className="mb-8 flex justify-center items-center gap-4 mr-2">
               <LayoutGroup>
                 <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
                   {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
