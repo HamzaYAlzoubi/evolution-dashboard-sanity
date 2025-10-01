@@ -139,15 +139,28 @@ const AchievementCampPage = () => {
       const today = new Date();
       const todayString = today.toISOString().split('T')[0];
 
-      // 1. Fetch all necessary data in parallel
-      const [users, seasons, activeSeasonData] = await Promise.all([
-      users = await sanityClient.fetch(getUsersQuery) as User[];
-        sanityClient.fetch(seasonsQuery),
-        sanityClient.fetch(activeSeasonQuery, { today: todayString })
-      ]).catch(err => {
-        console.error("Failed to fetch data:", err);
-        return [[], [], null]; // Return default values on error
-      });
+      // 1. Fetch all necessary data, with robust, separate calls
+      let users: User[] = [];
+      let seasons: Season[] = [];
+      let activeSeasonData: Season | null = null;
+
+      try {
+        users = await sanityClient.fetch(getUsersQuery) as User[];
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+      
+      try {
+        seasons = await sanityClient.fetch(seasonsQuery);
+      } catch (error) {
+        console.error("Failed to fetch seasons:", error);
+      }
+
+      try {
+        activeSeasonData = await sanityClient.fetch(activeSeasonQuery, { today: todayString });
+      } catch (error) {
+        console.error("Failed to fetch active season:", error);
+      }
 
       setActiveSeason(activeSeasonData);
       setPastSeasons(seasons || []);
@@ -159,7 +172,7 @@ const AchievementCampPage = () => {
         const todayMinutes = user.sessions?.filter(s => s && s.date === todayString).reduce((acc, s) => acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0) || 0;
 
         let livesLost = 0;
-        let status: 'active' | 'eliminated' = 'active';
+        const status: 'active' | 'eliminated' = 'active';
 
         // Camp-specific calculations ONLY if a season is active
         if (activeSeasonData) {
@@ -176,20 +189,22 @@ const AchievementCampPage = () => {
             }
           });
 
-          // Check failures for each past day within the active season
+          let userLivesLost = 0;
           for (let i = 0; i < daysInCampSoFar; i++) {
             const dayToCheck = new Date(seasonStartDate);
             dayToCheck.setDate(dayToCheck.getDate() + i);
             const dateString = dayToCheck.toISOString().split('T')[0];
             const achievedMinutes = sessionsByDay.get(dateString) || 0;
             if (achievedMinutes < dailyTarget) {
-              livesLost++;
+              userLivesLost++;
             }
           }
-          status = livesLost >= 3 ? 'eliminated' : 'active';
+          livesLost = userLivesLost;
         }
 
-        return { ...user, totalMinutes, todayMinutes, livesLost, status };
+        const finalStatus: 'active' | 'eliminated' = livesLost >= 3 ? 'eliminated' : 'active';
+
+        return { ...user, totalMinutes, todayMinutes, livesLost, status: finalStatus };
       });
 
       // 3. Sort and set final state
