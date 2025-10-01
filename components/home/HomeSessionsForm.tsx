@@ -140,11 +140,18 @@ export default function HomeSessionsForm() {
 
     setIsSubmitting(true);
     try {
+      const currentTime = new Date().toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
       const res = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          time: currentTime,
           userId: session?.user?.id,
           projectId: formData.project,
         }),

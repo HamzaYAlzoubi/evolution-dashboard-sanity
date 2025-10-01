@@ -5,14 +5,10 @@ export async function POST(req: Request) {
   const body = await req.json();
   try {
     // Create the new session document
-    const currentTime = new Date().toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
     const newSession = await writeClient.create({
       _type: "session",
       date: body.date,
-      time: currentTime,
+      time: body.time,
       hours: body.hours,
       minutes: body.minutes,
       notes: body.notes,

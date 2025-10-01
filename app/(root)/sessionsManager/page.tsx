@@ -233,15 +233,18 @@ export default function SessionsByDay() {
   }
 
   const formatSessionTime = (timeString: string | undefined) => {
-    if (!timeString || !/^\d{2}:\d{2}$/.test(timeString)) {
-      return null;
-    }
+    if (!timeString) return null;
+
+    // Determine format and parse accordingly
+    const hasSeconds = timeString.split(':').length === 3;
+    const parseFormat = hasSeconds ? 'HH:mm:ss' : 'HH:mm';
+
     try {
-      const date = parse(timeString, 'HH:mm', new Date());
+      const date = parse(timeString, parseFormat, new Date());
       return format(date, 'h:mm a');
     } catch (error) {
-      console.error("Failed to format time:", error);
-      return null;
+      console.error("Failed to format time:", timeString, error);
+      return null; // Return null if parsing fails for any reason
     }
   };
 
