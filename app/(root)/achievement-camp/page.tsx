@@ -315,7 +315,7 @@ const AchievementCampPage = () => {
         ) : (
           <>
             {/* Sort By Toggle */}
-            <div className="my-8 flex justify-center items-center gap-4">
+            <div className="mb-8 flex justify-center items-center gap-4">
               <LayoutGroup>
                 <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
                   {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
@@ -348,7 +348,7 @@ const AchievementCampPage = () => {
             </div>
 
             {topThree.length >= 1 && (
-              <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-3">
+              <div className="w-full max-w-4xl mb-10 flex justify-center items-end gap-2 sm:gap-3">
                 {podiumOrder.map(orderIndex => {
                   const user = topThree[orderIndex];
                   if (!user) return null;
