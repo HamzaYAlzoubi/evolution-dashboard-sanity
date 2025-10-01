@@ -87,6 +87,8 @@ interface UserWithStats extends User {
   totalMinutes: number;
   todayMinutes: number;
   rankTitle: string;
+  livesLost: number;
+  status: 'active' | 'eliminated';
 }
 
 interface Season {
