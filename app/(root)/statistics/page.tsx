@@ -8,7 +8,8 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FaSpinner } from "react-icons/fa";
 import { Calendar } from "@/components/ui/calendar";
-import { ChartAreaDefault } from "@/components/chart-area-default";
+import { ElegantChart } from "@/components/elegant-chart";
+import { formatMinutes } from "@/lib/utils";
 
 export default function StatisticsPage() {
   const { data: session, status } = useSession();
@@ -113,7 +114,7 @@ export default function StatisticsPage() {
 
 
 
-  const yAxisDomain = [0, Math.ceil(dailyTarget / 60)];
+  const yAxisDomain = [0, dailyTarget];
 
   // --- Chart Data Preparation ---
   const sortedDates = Object.keys(sessionsByDay).sort(
@@ -122,10 +123,15 @@ export default function StatisticsPage() {
 
   const last30DaysData = sortedDates.slice(-30).map(date => ({
     date: date,
-    hours: parseFloat((sessionsByDay[date].totalMinutes / 60).toFixed(2)),
+    totalMinutes: sessionsByDay[date].totalMinutes,
   }));
 
   const chartData = last30DaysData;
+
+  // Calculate average for the chart card
+  const totalMinutesLast30Days = chartData.reduce((acc, day) => acc + day.totalMinutes, 0);
+  const averageDailyMinutes = chartData.length > 0 ? (totalMinutesLast30Days / chartData.length) : 0;
+  const formattedAverage = formatMinutes(averageDailyMinutes);
 
   if (isLoading) {
     return (
@@ -207,17 +213,15 @@ export default function StatisticsPage() {
             </Card>
 
             <Card>
-
                 <CardHeader>
-                 <CardTitle>
-			<Badge className="text-base  font-bold px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-xl shadow whitespace-nowrap">ممتبع الإنجاز</Badge>
-		</CardTitle>                                 
-                
+                    <CardTitle>الأداء في آخر 30 يومًا</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                        {`متوسط الإنجاز اليومي: ${formattedAverage}`}
+                    </p>
                 </CardHeader>
                 <CardContent className="p-0 pt-4">
-                    <ChartAreaDefault
+                    <ElegantChart
                         chartData={chartData}
-
                         yAxisDomain={yAxisDomain}
                     />
                 </CardContent>
