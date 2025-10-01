@@ -141,7 +141,7 @@ const AchievementCampPage = () => {
 
       // 1. Fetch all necessary data in parallel
       const [users, seasons, activeSeasonData] = await Promise.all([
-        sanityClient.fetch(getUsersQuery),
+      users = await sanityClient.fetch(getUsersQuery) as User[];
         sanityClient.fetch(seasonsQuery),
         sanityClient.fetch(activeSeasonQuery, { today: todayString })
       ]).catch(err => {
