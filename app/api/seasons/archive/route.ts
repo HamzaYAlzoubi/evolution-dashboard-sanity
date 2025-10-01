@@ -1,6 +1,17 @@
 import { writeClient } from "@/sanity/lib/write-client";
 import { NextResponse } from "next/server";
 
+type Session = {
+  date: string;
+  hours: string;
+  minutes: string;
+};
+
+type UserWithSessions = {
+  _id: string;
+  sessions: Session[];
+};
+
 export async function POST(req: Request) {
   try {
     const today = new Date().toISOString().split('T')[0];
@@ -19,7 +30,7 @@ export async function POST(req: Request) {
     const allUsers = await writeClient.fetch(`*[_type == "user"]{
       _id,
       "sessions": sessions[]->{date, hours, minutes}
-    }`);
+    }`) as UserWithSessions[];
 
     let archivedCount = 0;
     let deletedCount = 0;
