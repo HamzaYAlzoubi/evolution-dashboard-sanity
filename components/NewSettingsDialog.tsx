@@ -13,14 +13,15 @@ import { User, Palette, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserProfileForm } from '@/components/auth/UserProfileForm';
 
-type SettingsSection = 'profile' | 'appearance' | 'account';
+type SettingsSection = 'profile' | 'appearance' | 'account' | 'control-panel';
 
 interface NewSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  currentUser: any;
 }
 
-const NewSettingsDialog = ({ open, onOpenChange }: NewSettingsDialogProps) => {
+const NewSettingsDialog = ({ open, onOpenChange, currentUser }: NewSettingsDialogProps) => {
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
 
   const navItems = [
@@ -65,6 +66,22 @@ const NewSettingsDialog = ({ open, onOpenChange }: NewSettingsDialogProps) => {
                 </span>
               </Button>
             ))}
+            {currentUser?.isAdmin && (
+              <Button
+                key="control-panel"
+                variant="ghost"
+                className={cn(
+                  'w-full flex-1 md:flex-initial flex flex-col md:flex-row items-center justify-center md:justify-start text-center md:text-right gap-2 px-2 md:px-3 h-auto min-h-[50px] md:min-h-[40px]',
+                  activeSection === 'control-panel' && 'bg-accent text-accent-foreground'
+                )}
+                onClick={() => setActiveSection('control-panel')}
+              >
+                <Shield className="h-5 w-5 text-red-500" />
+                <span className="text-xs md:text-sm whitespace-normal md:whitespace-nowrap">
+                  لوحة التحكم
+                </span>
+              </Button>
+            )}
           </nav>
 
           {/* Content Section */}
@@ -91,6 +108,14 @@ const NewSettingsDialog = ({ open, onOpenChange }: NewSettingsDialogProps) => {
                   الحساب
                 </h2>
                 <p className="text-right">محتوى قسم الحساب سيكون هنا.</p>
+              </div>
+            )}
+            {activeSection === 'control-panel' && currentUser?.isAdmin && (
+              <div>
+                <h2 className="hidden md:block text-2xl font-bold mb-4 text-right">
+                  لوحة تحكم الأدمن
+                </h2>
+                <p className="text-right">محتوى لوحة التحكم سيكون هنا.</p>
               </div>
             )}
           </div>

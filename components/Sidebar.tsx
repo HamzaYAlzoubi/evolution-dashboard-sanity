@@ -44,6 +44,7 @@ const getUserQuery = `*[_type == "user" && _id == $userId][0] {
   _id,
   name,
   image,
+  isAdmin,
 }`;
 
 const navItems = [
@@ -186,7 +187,7 @@ const Sidebar = () => {
                         <Settings className="h-4 w-4 mr-2" />
                         الإعدادات
                       </DropdownMenuItem>
-                  <NewSettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} />
+                  <NewSettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} currentUser={currentUser} />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Log Out
