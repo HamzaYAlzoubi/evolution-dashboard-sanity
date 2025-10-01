@@ -348,7 +348,7 @@ const AchievementCampPage = () => {
             </div>
 
             {topThree.length >= 1 && (
-              <div className="w-full max-w-4xl mb-10 flex justify-center items-end gap-2 sm:gap-3">
+              <div className="w-full max-w-4xl mt-4 mb-10 flex justify-center items-end gap-2 sm:gap-3">
                 {podiumOrder.map(orderIndex => {
                   const user = topThree[orderIndex];
                   if (!user) return null;
