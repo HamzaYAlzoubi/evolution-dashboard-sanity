@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Pencil, Loader2 } from "lucide-react";
+import { Heart, Pencil, Loader2, Trophy } from "lucide-react";
 import { OnboardingTour } from "@/components/camp/OnboardingTour";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
 import { motion, LayoutGroup } from "framer-motion";
@@ -102,6 +102,8 @@ const AchievementCampPage = () => {
   const [goalText, setGoalText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [sortBy, setSortBy] = useState<'total' | 'today'>('total');
+  const [seasonsDialogOpen, setSeasonsDialogOpen] = useState(false);
+  const [seasonsView, setSeasonsView] = useState<'current' | 'past'>('current');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -223,7 +225,7 @@ const AchievementCampPage = () => {
         </div>
 
         {/* Sort By Toggle */}
-        <div className="my-8">
+        <div className="my-8 flex justify-center items-center gap-4">
           <LayoutGroup>
             <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
               {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
@@ -252,6 +254,9 @@ const AchievementCampPage = () => {
               ))}
             </div>
           </LayoutGroup>
+          <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
+            <Trophy className="h-5 w-5" />
+          </Button>
         </div>
 
         {topThree.length >= 1 && (
@@ -507,6 +512,50 @@ const AchievementCampPage = () => {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Seasons Dialog */}
+      <Dialog open={seasonsDialogOpen} onOpenChange={setSeasonsDialogOpen}>
+        <DialogContent className="h-[80vh] flex flex-col sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>سجل المواسم</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <LayoutGroup>
+              <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
+                {[{ id: 'current', label: 'الموسم الحالي' }, { id: 'past', label: 'المواسم السابقة' }].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSeasonsView(tab.id as 'current' | 'past')}
+                    className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-colors z-10 ${
+                      seasonsView === tab.id
+                        ? 'text-gray-900 dark:text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'
+                    }`}
+                  >
+                    {seasonsView === tab.id && (
+                      <motion.div
+                        layoutId="seasons-pill"
+                        className="absolute inset-0 bg-white dark:bg-gray-900 rounded-full shadow"
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </LayoutGroup>
+          </div>
+          <div className="flex-grow overflow-y-auto no-scrollbar">
+            {/* Content will go here */}
+            {seasonsView === 'current' && (
+              <p>محتوى الموسم الحالي...</p>
+            )}
+            {seasonsView === 'past' && (
+              <p>محتوى المواسم السابقة...</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
