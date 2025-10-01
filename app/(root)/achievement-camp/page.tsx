@@ -589,27 +589,31 @@ const AchievementCampPage = () => {
                   <Accordion type="single" collapsible className="w-full">
                     {pastSeasons.map((season) => (
                       <AccordionItem value={season._id} key={season._id}>
-                                                <AccordionTrigger className="text-lg hover:no-underline">
-                          <div className="flex-grow text-right font-semibold">{season.name}</div>
-                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                            {/* Champion Stat */}
-                            {season.champion && (
-                              <div className="flex items-center gap-2">
-                                <Trophy className="h-4 w-4 text-amber-500" />
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage src={season.champion.image ? urlFor(season.champion.image).width(24).url() : undefined} />
-                                  <AvatarFallback>{season.champion.name?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium">{season.champion.name}</span>
-                              </div>
-                            )}
-                            {/* Survivors Stat */}
-                            {season.survivors && season.survivors.length > 0 && (
-                              <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4" />
-                                <span className="font-medium">{season.survivors.length}</span>
-                              </div>
-                            )}
+                                                <AccordionTrigger className="hover:no-underline">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2 text-right">
+                            {/* Season Name */}
+                            <span className="font-semibold text-lg text-amber-500">{season.name}</span>
+                            {/* Stats Block */}
+                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                              {/* Champion Stat */}
+                              {season.champion && (
+                                <div className="flex items-center gap-2">
+                                  <Trophy className="h-4 w-4 text-amber-500" />
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={season.champion.image ? urlFor(season.champion.image).width(24).url() : undefined} />
+                                    <AvatarFallback>{season.champion.name?.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium">{season.champion.name}</span>
+                                </div>
+                              )}
+                              {/* Survivors Stat */}
+                              {season.survivors && season.survivors.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4" />
+                                  <span className="font-medium">{season.survivors.length}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-2">
