@@ -29,7 +29,7 @@ interface NewSettingsDialogProps {
   currentUser: any;
 }
 
-import { useToast } from '@/hooks/use-toast';
+
 
 const NewSettingsDialog = ({ open, onOpenChange, currentUser }: NewSettingsDialogProps) => {
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
