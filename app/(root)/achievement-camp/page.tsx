@@ -188,7 +188,7 @@ const AchievementCampPage = () => {
           }
         }
 
-        const status = livesLost >= 3 ? 'eliminated' : 'active';
+        const status: 'active' | 'eliminated' = livesLost >= 3 ? 'eliminated' : 'active';
 
         return { ...user, totalMinutes, todayMinutes, livesLost, status };
       });
