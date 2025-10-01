@@ -274,20 +274,25 @@ const AchievementCampPage = () => {
 
   const podiumOrder = [1, 0, 2];
 
+  const seasonsButton = (
+    <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
+      <Trophy className="h-5 w-5" />
+    </Button>
+  );
+
   return (
     <>
       <div className="flex min-h-screen w-full flex-col items-center p-4 sm:p-8 md:p-12">
         <div className="flex items-center justify-center gap-4 my-6">
           <h1 className="text-4xl font-bold text-center">لوحة صدارة الأبطال</h1>
-          {!activeSeason && (
-            <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
-              <Trophy className="h-5 w-5" />
-            </Button>
-          )}
+          {/* Conditionally render button here ONLY if no season is active and not loading */}
+          {!activeSeason && !loading && seasonsButton}
           <OnboardingTour />
         </div>
 
-        {!activeSeason && !loading ? (
+        {loading ? (
+          <div className="flex items-center justify-center pt-20"><p>تحميل الأبطال...</p></div>
+        ) : !activeSeason ? (
           <div className="text-center text-muted-foreground mt-20">
             <p className="text-lg">لا يوجد معسكر نشط حاليًا.</p>
             <p className="text-sm">يمكن للأدمن إنشاء موسم جديد من الإعدادات.</p>
@@ -324,9 +329,7 @@ const AchievementCampPage = () => {
                   ))}
                 </div>
               </LayoutGroup>
-              <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
-                <Trophy className="h-5 w-5" />
-              </Button>
+              {seasonsButton}
             </div>
 
             {topThree.length >= 1 && (
@@ -405,9 +408,9 @@ const AchievementCampPage = () => {
                          </div>
                     </div>
                 </Card>
-              </div>
-            );
-          })}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
