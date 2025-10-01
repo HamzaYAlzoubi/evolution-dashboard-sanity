@@ -94,6 +94,8 @@ interface UserWithStats extends User {
 interface Season {
   _id: string;
   name: string;
+  startDate: string;
+  endDate: string;
   champion: { _id: string; name: string; image: any };
   survivors: { _id: string; name: string; image: any }[];
 }
@@ -113,6 +115,8 @@ const getUsersQuery = `*[_type == "user"] {
 const seasonsQuery = `*[_type == "season"] | order(startDate desc) {
   _id,
   name,
+  startDate,
+  endDate,
   champion->{_id, name, image},
   survivors[]->{_id, name, image}
 }`;
