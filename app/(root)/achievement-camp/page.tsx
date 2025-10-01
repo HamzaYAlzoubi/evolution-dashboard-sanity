@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Pencil, Loader2, Trophy, Users } from "lucide-react";
+import { Heart, Pencil, Loader2, Trophy, Users, Ghost } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { OnboardingTour } from "@/components/camp/OnboardingTour";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine, Tooltip as ChartTooltip } from "recharts";
@@ -131,32 +131,64 @@ const AchievementCampPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [users, seasons]: [User[], Season[]] = await Promise.all([
-        sanityClient.fetch(getUsersQuery),
-        sanityClient.fetch(seasonsQuery)
-      ]);
 
-      const today = new Date().toISOString().split('T')[0];
+      // Fetch users data (essential for the page)
+      let users: User[] = [];
+      try {
+        users = await sanityClient.fetch(getUsersQuery);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+
+      // Fetch seasons data (non-essential, can fail gracefully)
+      let seasons: Season[] = [];
+      try {
+        seasons = await sanityClient.fetch(seasonsQuery);
+      } catch (error) {
+        console.error("Failed to fetch seasons:", error);
+      }
+
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
 
       // Process users
       const usersWithMinutes = users.map(user => {
         const totalMinutes = user.sessions?.reduce((acc, s) => {
           if (!s) return acc;
-          const hours = Number(s.hours || 0);
-          const minutes = Number(s.minutes || 0);
-          return acc + (hours * 60) + minutes;
+          return acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0);
         }, 0) || 0;
 
         const todayMinutes = user.sessions
-          ?.filter(s => s && s.date === today)
-          .reduce((acc, s) => {
-            if (!s) return acc;
-            const hours = Number(s.hours || 0);
-            const minutes = Number(s.minutes || 0);
-            return acc + (hours * 60) + minutes;
-          }, 0) || 0;
+          ?.filter(s => s && s.date === todayString)
+          .reduce((acc, s) => acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0) || 0;
+        
+        const dailyTarget = 240; // 4 hours
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonthSoFar = today.getDate();
+        
+        const sessionsByDay = new Map<number, number>();
+        user.sessions?.forEach(s => {
+          if (!s || !s.date) return;
+          const sessionDate = new Date(s.date);
+          if (sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear) {
+            const dayOfMonth = sessionDate.getDate();
+            const sessionMinutes = (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0);
+            sessionsByDay.set(dayOfMonth, (sessionsByDay.get(dayOfMonth) || 0) + sessionMinutes);
+          }
+        });
 
-        return { ...user, totalMinutes, todayMinutes };
+        let livesLost = 0;
+        for (let day = 1; day < daysInMonthSoFar; day++) {
+          const achievedMinutes = sessionsByDay.get(day) || 0;
+          if (achievedMinutes < dailyTarget) {
+            livesLost++;
+          }
+        }
+
+        const status = livesLost >= 3 ? 'eliminated' : 'active';
+
+        return { ...user, totalMinutes, todayMinutes, livesLost, status };
       });
 
       usersWithMinutes.sort((a, b) => b.totalMinutes - a.totalMinutes);
@@ -575,8 +607,59 @@ const AchievementCampPage = () => {
           </div>
           <div className="flex-grow overflow-y-auto no-scrollbar pr-4">
             {seasonsView === 'current' && (
-              <div className="text-center text-muted-foreground pt-10">
-                <p>سيتم بناء واجهة الموسم الحالي قريبًا...</p>
+              <div className="space-y-6">
+                {/* Active Players Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 text-green-500">على قيد الحياة ({usersWithStats.filter(u => u.status === 'active').length})</h3>
+                  <div className="space-y-2">
+                    {usersWithStats
+                      .filter(user => user.status === 'active')
+                      .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                      .map((user, index) => (
+                        <Card key={user._id} className="p-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-bold text-muted-foreground w-6 text-center">{index + 1}</span>
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage src={user.image ? urlFor(user.image).width(40).url() : undefined} alt={user.name} />
+                              <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
+                            </Avatar>
+                            <p className="font-semibold">{user.name}</p>
+                          </div>
+                          <div className="flex gap-1">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                              <Heart
+                                key={i}
+                                className={`h-5 w-5 ${i < (3 - user.livesLost) ? 'fill-red-500 stroke-red-600' : 'fill-slate-300 stroke-slate-400 dark:fill-slate-600 dark:stroke-slate-500'}`}
+                              />
+                            ))}
+                          </div>
+                        </Card>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Eliminated Players Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 text-slate-500">الأشباح ({usersWithStats.filter(u => u.status === 'eliminated').length})</h3>
+                  <div className="space-y-2">
+                    {usersWithStats
+                      .filter(user => user.status === 'eliminated')
+                      .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                      .map((user, index) => (
+                        <Card key={user._id} className="p-3 flex items-center justify-between filter grayscale opacity-60">
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-bold text-muted-foreground w-6 text-center line-through">{usersWithStats.filter(u => u.status === 'active').length + index + 1}</span>
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage src={user.image ? urlFor(user.image).width(40).url() : undefined} alt={user.name} />
+                              <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
+                            </Avatar>
+                            <p className="font-semibold">{user.name}</p>
+                          </div>
+                          <Ghost className="h-6 w-6 text-slate-500" />
+                        </Card>
+                      ))}
+                  </div>
+                </div>
               </div>
             )}
             {seasonsView === 'past' && (
