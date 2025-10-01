@@ -5,6 +5,7 @@ export const USER_QUERY = defineQuery(`
     _id,
     name,
     email,
+    isAdmin,
     dailyTarget,
     projects[]->{
       _id,

@@ -53,5 +53,12 @@ export default {
       type: "array",
       of: [{ type: "reference", to: [{ type: "session" }] }],
     },
+    {
+      name: 'isAdmin',
+      title: 'Admin',
+      type: 'boolean',
+      description: 'Set to true if the user is an administrator',
+      initialValue: false,
+    },
   ],
 }
