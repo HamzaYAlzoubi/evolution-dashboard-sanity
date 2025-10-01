@@ -9,6 +9,11 @@ export default {
       type: "date",
     },
     {
+      name: "time",
+      title: "Time",
+      type: "string",
+    },
+    {
       name: "hours",
       title: "Hours",
       type: "string",

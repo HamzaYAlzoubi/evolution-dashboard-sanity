@@ -21,6 +21,7 @@ export const USER_QUERY = defineQuery(`
     sessions[]->{
       _id,
       date,
+      time,
       hours,
       minutes,
       notes,

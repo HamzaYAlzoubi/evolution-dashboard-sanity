@@ -17,12 +17,14 @@ import { ChevronDown, ChevronUp, Star, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FaSpinner } from "react-icons/fa";
 import { Switch } from "@/components/ui/switch";
+import { parse, format } from 'date-fns';
 
 type Session = {
   _id: string;
   projectId?: string;
   projectName?: string;
   date: string;
+  time?: string;
   hours: string;
   minutes: string;
   notes: string;
@@ -214,6 +216,19 @@ export default function SessionsByDay() {
     });
   }
 
+  const formatSessionTime = (timeString: string | undefined) => {
+    if (!timeString || !/^\d{2}:\d{2}$/.test(timeString)) {
+      return null;
+    }
+    try {
+      const date = parse(timeString, 'HH:mm', new Date());
+      return format(date, 'h:mm a');
+    } catch (error) {
+      console.error("Failed to format time:", error);
+      return null;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -298,7 +313,7 @@ export default function SessionsByDay() {
               {isExpanded && (
                 <div className="space-y-3">
                   {dayData.sessions
-                    .sort((a, b) => (a._id > b._id ? 1 : -1))
+                    .sort((a, b) => (b.time || '').localeCompare(a.time || ''))
                     .map((session) => {
                       const sessionHours = Number(session.hours) || 0;
                       const sessionMinutes = Number(session.minutes) || 0;
@@ -374,6 +389,18 @@ export default function SessionsByDay() {
           <DialogHeader>
             <DialogTitle>تفاصيل الجلسة</DialogTitle>
           </DialogHeader>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">تاريخ ووقت الجلسة</h3>
+            <p className="text-lg">
+              {detailsSession?.date}
+              {detailsSession?.time && formatSessionTime(detailsSession.time) && (
+                <span className="mx-2">•</span>
+              )}
+              {detailsSession?.time && formatSessionTime(detailsSession.time)}
+            </p>
+          </div>
+
             <DialogTitle>المشروع الذي تم العمل عليه ﺃثناء الجلسة:</DialogTitle>
           <div className="text-gray-700 dark:text-white text-lg whitespace-pre-wrap min-h-[60px]">
             {detailsSession?.projectName || <span className="text-red-600"> المشروع تم حذفه.</span>}

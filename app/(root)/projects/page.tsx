@@ -97,6 +97,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [showDetailedTime, setShowDetailedTime] = useState(false);
+  const [showPostponedProjects, setShowPostponedProjects] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -270,6 +271,10 @@ export default function ProjectsPage() {
     if (savedShowDetailedTime) {
       setShowDetailedTime(JSON.parse(savedShowDetailedTime));
     }
+    const savedShowPostponed = localStorage.getItem("showPostponedProjects");
+    if (savedShowPostponed) {
+      setShowPostponedProjects(JSON.parse(savedShowPostponed));
+    }
   }, []);
 
   
@@ -407,6 +412,13 @@ export default function ProjectsPage() {
     return `${hours.toLocaleString()}h ${minutes}m`;
   };
 
+  const projectsToRender = projects
+    .filter(p => showPostponedProjects || p.status !== 'مؤجل')
+    .map(project => ({
+      ...project,
+      subProjects: project.subProjects.filter(sp => showPostponedProjects || sp.status !== 'مؤجل')
+    }));
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="p-6 space-y-4 bg-red-0">
@@ -416,8 +428,8 @@ export default function ProjectsPage() {
             <Settings />
           </Button>
         </div>
-        <SortableContext items={projects.map((p) => p._id)} strategy={verticalListSortingStrategy}>
-          {projects.map((project) => {
+        <SortableContext items={projectsToRender.map((p) => p._id)} strategy={verticalListSortingStrategy}>
+          {projectsToRender.map((project) => {
             const totalTime = calcTotalTime(project);
             const subProjectsTime = project.subProjects.map((sp) => calculateSessionTime(sp.sessions));
             return (
@@ -428,7 +440,7 @@ export default function ProjectsPage() {
                       {expanded.includes(project._id) ? <ChevronDown /> : <ChevronRight />}
                       <span className="font-semibold">{project.name}</span>
                     </div>
-                    <Badge className="ml-2" variant={project.status === "نشط" ? "default" : project.status === "مكتمل" ? "secondary" : "destructive"}>
+                    <Badge className="ml-2" variant={project.status === "نشط" ? "default" : project.status === "مكتمل" ? "secondary" : "outline"}>
                       {project.status}
                     </Badge>
                     <div className="flex items-center bg-green-5">
@@ -464,7 +476,7 @@ export default function ProjectsPage() {
                                     <span>{subProject.name}</span>
                                   </div>
 
-                                  <Badge className="ml-2" variant={subProject.status === "نشط" ? "default" : subProject.status === "مكتمل" ? "secondary" : "destructive"}>
+                                  <Badge className="ml-2" variant={subProject.status === "نشط" ? "default" : subProject.status === "مكتمل" ? "secondary" : "outline"}>
                                     {subProject.status}
                                   </Badge>
 
@@ -501,17 +513,40 @@ export default function ProjectsPage() {
         <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>إعدادات عرض الوقت</DialogTitle>
+              <DialogTitle>الإعدادات</DialogTitle>
             </DialogHeader>
-            <div className="flex items-center justify-between py-4">
-              <span>عرض الوقت بتنسيق ذكي</span>
-              <Switch
-                checked={showDetailedTime}
-                onCheckedChange={(value) => {
-                  setShowDetailedTime(value);
-                  localStorage.setItem("showDetailedTime", JSON.stringify(value));
-                }}
-              />
+            <div className="py-4 space-y-6">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">العرض</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="smart-time-format" className="text-sm font-medium">
+                      عرض الوقت بتنسيق ذكي
+                    </label>
+                    <Switch
+                      id="smart-time-format"
+                      checked={showDetailedTime}
+                      onCheckedChange={(value) => {
+                        setShowDetailedTime(value);
+                        localStorage.setItem("showDetailedTime", JSON.stringify(value));
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="show-postponed" className="text-sm font-medium">
+                      إظهار المشاريع المؤجلة
+                    </label>
+                    <Switch
+                      id="show-postponed"
+                      checked={showPostponedProjects}
+                      onCheckedChange={(value) => {
+                        setShowPostponedProjects(value);
+                        localStorage.setItem("showPostponedProjects", JSON.stringify(value));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setSettingsDialogOpen(false)}>

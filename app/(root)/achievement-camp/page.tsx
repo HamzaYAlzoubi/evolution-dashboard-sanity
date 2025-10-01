@@ -144,6 +144,11 @@ const AchievementCampPage = () => {
     };
 
     fetchUsers();
+
+    const savedSortBy = localStorage.getItem('leaderboardSortBy');
+    if (savedSortBy === 'total' || savedSortBy === 'today') {
+      setSortBy(savedSortBy);
+    }
   }, []);
 
   const handleSaveGoal = async () => {
@@ -224,7 +229,11 @@ const AchievementCampPage = () => {
               {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setSortBy(tab.id as 'total' | 'today')}
+                  onClick={() => {
+                    const newSortBy = tab.id as 'total' | 'today';
+                    setSortBy(newSortBy);
+                    localStorage.setItem('leaderboardSortBy', newSortBy);
+                  }}
                   className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-colors z-10 ${
                     sortBy === tab.id
                       ? 'text-gray-900 dark:text-white'
