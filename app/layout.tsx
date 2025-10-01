@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { Providers } from "@/components/auth/Providers";
 import { Metadata } from "next";
 
+
 export const metadata: Metadata = {
   title: "السبيل",
   description: "لوحة تحكم السبيل",

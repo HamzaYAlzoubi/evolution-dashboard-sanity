@@ -117,6 +117,8 @@ const seasonsQuery = `*[_type == "season"] | order(startDate desc) {
   survivors[]->{_id, name, image}
 }`;
 
+const activeSeasonQuery = `*[_type == "season" && startDate <= $today && endDate >= $today][0]`;
+
 const AchievementCampPage = () => {
   const { data: session } = useSession();
   const [usersWithStats, setUsersWithStats] = useState<UserWithStats[]>([]);
@@ -129,79 +131,75 @@ const AchievementCampPage = () => {
   const [seasonsDialogOpen, setSeasonsDialogOpen] = useState(false);
   const [seasonsView, setSeasonsView] = useState<'current' | 'past'>('current');
   const [pastSeasons, setPastSeasons] = useState<Season[]>([]);
+  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-
-      // Fetch users data (essential for the page)
-      let users: User[] = [];
-      try {
-        users = await sanityClient.fetch(getUsersQuery);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      }
-
-      // Fetch seasons data (non-essential, can fail gracefully)
-      let seasons: Season[] = [];
-      try {
-        seasons = await sanityClient.fetch(seasonsQuery);
-      } catch (error) {
-        console.error("Failed to fetch seasons:", error);
-      }
-
       const today = new Date();
       const todayString = today.toISOString().split('T')[0];
 
-      // Process users
-      const usersWithMinutes = users.map(user => {
-        const totalMinutes = user.sessions?.reduce((acc, s) => {
-          if (!s) return acc;
-          return acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0);
-        }, 0) || 0;
+      // 1. Fetch all necessary data in parallel
+      const [users, seasons, activeSeasonData] = await Promise.all([
+        sanityClient.fetch(getUsersQuery),
+        sanityClient.fetch(seasonsQuery),
+        sanityClient.fetch(activeSeasonQuery, { today: todayString })
+      ]).catch(err => {
+        console.error("Failed to fetch data:", err);
+        return [[], [], null]; // Return default values on error
+      });
 
-        const todayMinutes = user.sessions
-          ?.filter(s => s && s.date === todayString)
-          .reduce((acc, s) => acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0) || 0;
-        
-        const dailyTarget = 240; // 4 hours
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        const daysInMonthSoFar = today.getDate();
-        
-        const sessionsByDay = new Map<number, number>();
-        user.sessions?.forEach(s => {
-          if (!s || !s.date) return;
-          const sessionDate = new Date(s.date);
-          if (sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear) {
-            const dayOfMonth = sessionDate.getDate();
-            const sessionMinutes = (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0);
-            sessionsByDay.set(dayOfMonth, (sessionsByDay.get(dayOfMonth) || 0) + sessionMinutes);
-          }
-        });
+      setActiveSeason(activeSeasonData);
+      setPastSeasons(seasons || []);
+
+      // 2. Process user stats
+      const usersWithStatsProcessing = (users || []).map(user => {
+        // Basic time calculation (always relevant)
+        const totalMinutes = user.sessions?.reduce((acc, s) => acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0) || 0;
+        const todayMinutes = user.sessions?.filter(s => s && s.date === todayString).reduce((acc, s) => acc + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0) || 0;
 
         let livesLost = 0;
-        for (let day = 1; day < daysInMonthSoFar; day++) {
-          const achievedMinutes = sessionsByDay.get(day) || 0;
-          if (achievedMinutes < dailyTarget) {
-            livesLost++;
-          }
-        }
+        let status: 'active' | 'eliminated' = 'active';
 
-        const status: 'active' | 'eliminated' = livesLost >= 3 ? 'eliminated' : 'active';
+        // Camp-specific calculations ONLY if a season is active
+        if (activeSeasonData) {
+          const dailyTarget = 240; // 4 hours
+          const seasonStartDate = new Date(activeSeasonData.startDate);
+          const daysInCampSoFar = Math.floor((today.getTime() - seasonStartDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          const sessionsByDay = new Map<string, number>();
+          user.sessions?.forEach(s => {
+            if (!s || !s.date) return;
+            const sessionDate = new Date(s.date);
+            if (sessionDate >= seasonStartDate && sessionDate <= today) {
+              sessionsByDay.set(s.date, (sessionsByDay.get(s.date) || 0) + ((Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0)));
+            }
+          });
+
+          // Check failures for each past day within the active season
+          for (let i = 0; i < daysInCampSoFar; i++) {
+            const dayToCheck = new Date(seasonStartDate);
+            dayToCheck.setDate(dayToCheck.getDate() + i);
+            const dateString = dayToCheck.toISOString().split('T')[0];
+            const achievedMinutes = sessionsByDay.get(dateString) || 0;
+            if (achievedMinutes < dailyTarget) {
+              livesLost++;
+            }
+          }
+          status = livesLost >= 3 ? 'eliminated' : 'active';
+        }
 
         return { ...user, totalMinutes, todayMinutes, livesLost, status };
       });
 
-      usersWithMinutes.sort((a, b) => b.totalMinutes - a.totalMinutes);
-
-      const finalUsersWithStats = usersWithMinutes.map((user, index) => {
-        const rankTitle = getRank(user.totalMinutes, index);
-        return { ...user, rankTitle };
-      });
+      // 3. Sort and set final state
+      usersWithStatsProcessing.sort((a, b) => b.totalMinutes - a.totalMinutes);
+      const finalUsersWithStats = usersWithStatsProcessing.map((user, index) => ({
+        ...user,
+        rankTitle: getRank(user.totalMinutes, index),
+      }));
 
       setUsersWithStats(finalUsersWithStats);
-      setPastSeasons(seasons || []);
       setLoading(false);
     };
 
@@ -281,93 +279,105 @@ const AchievementCampPage = () => {
       <div className="flex min-h-screen w-full flex-col items-center p-4 sm:p-8 md:p-12">
         <div className="flex items-center justify-center gap-4 my-6">
           <h1 className="text-4xl font-bold text-center">لوحة صدارة الأبطال</h1>
+          {!activeSeason && (
+            <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
+              <Trophy className="h-5 w-5" />
+            </Button>
+          )}
           <OnboardingTour />
         </div>
 
-        {/* Sort By Toggle */}
-        <div className="my-8 flex justify-center items-center gap-4">
-          <LayoutGroup>
-            <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
-              {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    const newSortBy = tab.id as 'total' | 'today';
-                    setSortBy(newSortBy);
-                    localStorage.setItem('leaderboardSortBy', newSortBy);
-                  }}
-                  className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-colors z-10 ${
-                    sortBy === tab.id
-                      ? 'text-gray-900 dark:text-white'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'
-                  }`}
-                >
-                  {sortBy === tab.id && (
-                    <motion.div
-                      layoutId="active-pill"
-                      className="absolute inset-0 bg-white dark:bg-gray-900 rounded-full shadow"
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative">{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </LayoutGroup>
-          <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
-            <Trophy className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {topThree.length >= 1 && (
-          <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-3">
-            {podiumOrder.map(orderIndex => {
-              const user = topThree[orderIndex];
-              if (!user) return null;
-              const style = podiumStyles[orderIndex];
-              const avatarSize = orderIndex === 0 ? "h-16 w-16 sm:h-18 sm:w-18" : "h-12 w-12 sm:h-14 sm:w-14";
-              const ringSize = orderIndex === 0 ? 80 : 64;
-              const ringStrokeWidth = orderIndex === 0 ? 5 : 4;
-
-              return (
-                <div key={user._id} className={`transform transition-all duration-300 ${style.scale} w-1/3 max-w-[180px] cursor-pointer hover:-translate-y-3`} onClick={() => setSelectedUser(user)}>
-                  <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor}`}>
-                    <CardHeader className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4">
-                      <span className="text-3xl sm:text-4xl">{style.icon}</span>
-                      <p className="text-[0.6rem] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 my-0.5 sm:my-1 text-center">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
-                      <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={ringSize} strokeWidth={ringStrokeWidth}>
-                        <Avatar className={`${avatarSize} border-2 border-white`}>
-                          <AvatarImage src={user.image ? urlFor(user.image).width(100).url() : undefined} alt={user.name} />
-                          <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
-                        </Avatar>
-                      </ProgressRing>
-                      <CardTitle className="text-center text-sm sm:text-base">{user.name}</CardTitle>
-                      <Badge className={`border text-xxs sm:text-xs ${getRankStyle(user.rankTitle)}`}>{user.rankTitle}</Badge>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col justify-between p-2 sm:p-4">
-                      <div className="space-y-1 sm:space-y-3 text-center">
-                        <div>
-                          <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">الإنجاز الكلي</h3>
-                          <p className="text-base sm:text-xl font-bold">{formatMinutes(user.totalMinutes)}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">إنجاز اليوم</h3>
-                          <p className="text-sm sm:text-lg font-bold">{formatMinutes(user.todayMinutes)}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              );
-            })}
+        {!activeSeason && !loading ? (
+          <div className="text-center text-muted-foreground mt-20">
+            <p className="text-lg">لا يوجد معسكر نشط حاليًا.</p>
+            <p className="text-sm">يمكن للأدمن إنشاء موسم جديد من الإعدادات.</p>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Sort By Toggle */}
+            <div className="my-8 flex justify-center items-center gap-4">
+              <LayoutGroup>
+                <div className="relative p-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center w-fit mx-auto shadow-inner">
+                  {[{ id: 'total', label: 'الأبطال' }, { id: 'today', label: 'نجوم اليوم' }].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        const newSortBy = tab.id as 'total' | 'today';
+                        setSortBy(newSortBy);
+                        localStorage.setItem('leaderboardSortBy', newSortBy);
+                      }}
+                      className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-colors z-10 ${
+                        sortBy === tab.id
+                          ? 'text-gray-900 dark:text-white'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'
+                      }`}
+                    >
+                      {sortBy === tab.id && (
+                        <motion.div
+                          layoutId="active-pill"
+                          className="absolute inset-0 bg-white dark:bg-gray-900 rounded-full shadow"
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </LayoutGroup>
+              <Button size="icon" variant="outline" className="rounded-full" onClick={() => setSeasonsDialogOpen(true)}>
+                <Trophy className="h-5 w-5" />
+              </Button>
+            </div>
 
-        <div className="w-full max-w-4xl mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {restOfUsers.map((user, index) => {
-            const rank = index + 4;
-            return (
-              <div key={user._id} className="cursor-pointer transition-transform duration-300 hover:-translate-y-2 hover:scale-[1.03]" onClick={() => setSelectedUser(user)}>                <Card className="w-full flex flex-col p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            {topThree.length >= 1 && (
+              <div className="w-full max-w-4xl my-10 flex justify-center items-end gap-2 sm:gap-3">
+                {podiumOrder.map(orderIndex => {
+                  const user = topThree[orderIndex];
+                  if (!user) return null;
+                  const style = podiumStyles[orderIndex];
+                  const avatarSize = orderIndex === 0 ? "h-16 w-16 sm:h-18 sm:w-18" : "h-12 w-12 sm:h-14 sm:w-14";
+                  const ringSize = orderIndex === 0 ? 80 : 64;
+                  const ringStrokeWidth = orderIndex === 0 ? 5 : 4;
+
+                  return (
+                    <div key={user._id} className={`transform transition-all duration-300 ${style.scale} w-1/3 max-w-[180px] cursor-pointer hover:-translate-y-3`} onClick={() => setSelectedUser(user)}>
+                      <Card className={`w-full flex flex-col border-4 ${style.borderColor} ${style.bgColor}`}>
+                        <CardHeader className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4">
+                          <span className="text-3xl sm:text-4xl">{style.icon}</span>
+                          <p className="text-[0.6rem] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 my-0.5 sm:my-1 text-center">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
+                          <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={ringSize} strokeWidth={ringStrokeWidth}>
+                            <Avatar className={`${avatarSize} border-2 border-white`}>
+                              <AvatarImage src={user.image ? urlFor(user.image).width(100).url() : undefined} alt={user.name} />
+                              <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
+                            </Avatar>
+                          </ProgressRing>
+                          <CardTitle className="text-center text-sm sm:text-base">{user.name}</CardTitle>
+                          <Badge className={`border text-xxs sm:text-xs ${getRankStyle(user.rankTitle)}`}>{user.rankTitle}</Badge>
+                        </CardHeader>
+                        <CardContent className="flex-grow flex flex-col justify-between p-2 sm:p-4">
+                          <div className="space-y-1 sm:space-y-3 text-center">
+                            <div>
+                              <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">الإنجاز الكلي</h3>
+                              <p className="text-base sm:text-xl font-bold">{formatMinutes(user.totalMinutes)}</p>
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">إنجاز اليوم</h3>
+                              <p className="text-sm sm:text-lg font-bold">{formatMinutes(user.todayMinutes)}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="w-full max-w-4xl mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {restOfUsers.map((user, index) => {
+                const rank = index + 4;
+                return (
+                  <div key={user._id} className="cursor-pointer transition-transform duration-300 hover:-translate-y-2 hover:scale-[1.03]" onClick={() => setSelectedUser(user)}>                <Card className="w-full flex flex-col p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                     <div className="flex items-center gap-4">
                         <span className="text-xl font-bold text-gray-500">#{rank}</span>
                         <ProgressRing progress={Math.min((user.todayMinutes / 240) * 100, 100)} size={56} strokeWidth={4}>
@@ -385,11 +395,11 @@ const AchievementCampPage = () => {
                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{`تحدي المعسكر: ${Math.round(Math.min((user.todayMinutes / 240) * 100, 100))}%`}</p>
                          <div className="flex justify-around">
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">الإنجاز الكلي</h3>
+                                <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">الإنجاز الكلي</h3>
                                 <p className="font-bold">{formatMinutes(user.totalMinutes)}</p>
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">إنجاز اليوم</h3>
+                                <h3 className="font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">إنجاز اليوم</h3>
                                 <p className="font-bold">{formatMinutes(user.todayMinutes)}</p>
                             </div>
                          </div>
@@ -398,7 +408,9 @@ const AchievementCampPage = () => {
               </div>
             );
           })}
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       <Dialog open={!!selectedUser} onOpenChange={(isOpen) => { 
@@ -609,59 +621,67 @@ const AchievementCampPage = () => {
           </div>
           <div className="flex-grow overflow-y-auto no-scrollbar pr-4">
             {seasonsView === 'current' && (
-              <div className="space-y-6">
-                {/* Active Players Section */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3 text-green-500">على قيد الحياة ({usersWithStats.filter(u => u.status === 'active').length})</h3>
-                  <div className="space-y-2">
-                    {usersWithStats
-                      .filter(user => user.status === 'active')
-                      .sort((a, b) => b.totalMinutes - a.totalMinutes)
-                      .map((user, index) => (
-                        <Card key={user._id} className="p-3 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-base font-bold text-muted-foreground w-6 text-center">{index + 1}</span>
-                            <Avatar className="h-9 w-9">
-                              <AvatarImage src={user.image ? urlFor(user.image).width(40).url() : undefined} alt={user.name} />
-                              <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
-                            </Avatar>
-                            <p className="font-semibold">{user.name}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            {Array.from({ length: 3 }).map((_, i) => (
-                              <Heart
-                                key={i}
-                                className={`h-5 w-5 ${i < (3 - user.livesLost) ? 'fill-red-500 stroke-red-600' : 'fill-slate-300 stroke-slate-400 dark:fill-slate-600 dark:stroke-slate-500'}`}
-                              />
-                            ))}
-                          </div>
-                        </Card>
-                      ))}
+              <div>
+                {!activeSeason ? (
+                  <div className="text-center text-muted-foreground pt-10">
+                    <p>لا يوجد معسكر نشط حاليًا لعرض حالته.</p>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Active Players Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-green-500">على قيد الحياة ({usersWithStats.filter(u => u.status === 'active').length})</h3>
+                      <div className="space-y-2">
+                        {usersWithStats
+                          .filter(user => user.status === 'active')
+                          .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                          .map((user, index) => (
+                            <Card key={user._id} className="p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="text-base font-bold text-muted-foreground w-6 text-center">{index + 1}</span>
+                                <Avatar className="h-9 w-9">
+                                  <AvatarImage src={user.image ? urlFor(user.image).width(40).url() : undefined} alt={user.name} />
+                                  <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
+                                </Avatar>
+                                <p className="font-semibold">{user.name}</p>
+                              </div>
+                              <div className="flex gap-1">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                  <Heart
+                                    key={i}
+                                    className={`h-5 w-5 ${i < (3 - user.livesLost) ? 'fill-red-500 stroke-red-600' : 'fill-slate-300 stroke-slate-400 dark:fill-slate-600 dark:stroke-slate-500'}`}
+                                  />
+                                ))}
+                              </div>
+                            </Card>
+                          ))}
+                      </div>
+                    </div>
 
-                {/* Eliminated Players Section */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-3 text-slate-500">الأشباح ({usersWithStats.filter(u => u.status === 'eliminated').length})</h3>
-                  <div className="space-y-2">
-                    {usersWithStats
-                      .filter(user => user.status === 'eliminated')
-                      .sort((a, b) => b.totalMinutes - a.totalMinutes)
-                      .map((user, index) => (
-                        <Card key={user._id} className="p-3 flex items-center justify-between filter grayscale opacity-60">
-                          <div className="flex items-center gap-3">
-                            <span className="text-base font-bold text-muted-foreground w-6 text-center line-through">{usersWithStats.filter(u => u.status === 'active').length + index + 1}</span>
-                            <Avatar className="h-9 w-9">
-                              <AvatarImage src={user.image ? urlFor(user.image).width(40).url() : undefined} alt={user.name} />
-                              <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
-                            </Avatar>
-                            <p className="font-semibold">{user.name}</p>
-                          </div>
-                          <Ghost className="h-6 w-6 text-slate-500" />
-                        </Card>
-                      ))}
+                    {/* Eliminated Players Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-slate-500">الأشباح ({usersWithStats.filter(u => u.status === 'eliminated').length})</h3>
+                      <div className="space-y-2">
+                        {usersWithStats
+                          .filter(user => user.status === 'eliminated')
+                          .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                          .map((user, index) => (
+                            <Card key={user._id} className="p-3 flex items-center justify-between filter grayscale opacity-60">
+                              <div className="flex items-center gap-3">
+                                <span className="text-base font-bold text-muted-foreground w-6 text-center line-through">{usersWithStats.filter(u => u.status === 'active').length + index + 1}</span>
+                                <Avatar className="h-9 w-9">
+                                  <AvatarImage src={user.image ? urlFor(user.image).width(40).url() : undefined} alt={user.name} />
+                                  <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
+                                </Avatar>
+                                <p className="font-semibold">{user.name}</p>
+                              </div>
+                              <Ghost className="h-6 w-6 text-slate-500" />
+                            </Card>
+                          ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
             {seasonsView === 'past' && (
@@ -672,7 +692,9 @@ const AchievementCampPage = () => {
                   </div>
                 ) : (
                   <Accordion type="single" collapsible className="w-full">
-                    {pastSeasons.map((season) => (
+                    {pastSeasons
+                      .filter(season => season.champion)
+                      .map((season) => (
                       <AccordionItem value={season._id} key={season._id}>
                                                 <AccordionTrigger className="hover:no-underline">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2 text-right">
