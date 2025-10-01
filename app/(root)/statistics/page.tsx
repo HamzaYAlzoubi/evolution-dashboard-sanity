@@ -47,15 +47,32 @@ export default function StatisticsPage() {
   const totalHoursMonth = Math.floor(totalMinutesMonth / 60);
   const totalMinutesMonthRemainder = totalMinutesMonth % 60;
 
-  const today = new Date();
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(today.getDate() - 6);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
+  // --- Weekly Achievement (Custom Month-based Weeks) ---
+  const dayOfMonth = now.getDate();
+  let weekStartDate, weekEndDate;
+
+  if (dayOfMonth >= 1 && dayOfMonth <= 7) {
+    weekStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    weekEndDate = new Date(now.getFullYear(), now.getMonth(), 7);
+  } else if (dayOfMonth >= 8 && dayOfMonth <= 14) {
+    weekStartDate = new Date(now.getFullYear(), now.getMonth(), 8);
+    weekEndDate = new Date(now.getFullYear(), now.getMonth(), 14);
+  } else if (dayOfMonth >= 15 && dayOfMonth <= 21) {
+    weekStartDate = new Date(now.getFullYear(), now.getMonth(), 15);
+    weekEndDate = new Date(now.getFullYear(), now.getMonth(), 21);
+  } else { // Day 22 to end of month
+    weekStartDate = new Date(now.getFullYear(), now.getMonth(), 22);
+    weekEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
+  }
+  
+  weekStartDate.setHours(0, 0, 0, 0);
+  weekEndDate.setHours(23, 59, 59, 999);
 
   const totalMinutesWeek = sessions
     .filter(s => {
+      if (!s.date) return false;
       const sessionDate = new Date(s.date);
-      return sessionDate >= sevenDaysAgo;
+      return sessionDate >= weekStartDate && sessionDate <= weekEndDate;
     })
     .reduce((sum, s) => sum + (Number(s.hours) || 0) * 60 + (Number(s.minutes) || 0), 0);
   const totalHoursWeek = Math.floor(totalMinutesWeek / 60);

@@ -412,13 +412,19 @@ export default function ProjectsPage() {
     return `${hours.toLocaleString()}h ${minutes}m`;
   };
 
-  const projectsToRender = projects
-    .filter(p => showPostponedProjects || p.status !== 'مؤجل')
-    .map(project => ({
-      ...project,
-      subProjects: project.subProjects.filter(sp => showPostponedProjects || sp.status !== 'مؤجل')
-    }));
-
+      // Step 1: Pre-calculate total time for each project BEFORE filtering
+      const projectsWithPreCalculatedTime = projects.map(p => ({
+        ...p,
+        preCalculatedTotalTime: calcTotalTime(p)
+      }));
+    
+      // Step 2: Filter for rendering (hiding postponed projects and sub-projects)
+      const projectsToRender = projectsWithPreCalculatedTime
+        .filter(p => showPostponedProjects || p.status !== 'مؤجل')
+        .map(project => ({
+          ...project,
+          subProjects: project.subProjects.filter(sp => showPostponedProjects || sp.status !== 'مؤجل')
+        }));
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="p-6 space-y-4 bg-red-0">
@@ -430,7 +436,7 @@ export default function ProjectsPage() {
         </div>
         <SortableContext items={projectsToRender.map((p) => p._id)} strategy={verticalListSortingStrategy}>
           {projectsToRender.map((project) => {
-            const totalTime = calcTotalTime(project);
+            const totalTime = project.preCalculatedTotalTime;
             const subProjectsTime = project.subProjects.map((sp) => calculateSessionTime(sp.sessions));
             return (
               <SortableItem key={project._id} id={project._id} data={{ type: 'project' }}>
